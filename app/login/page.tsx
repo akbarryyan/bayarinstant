@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Quicksand } from "@/lib/fonts";
 import { useToast } from "@/hooks/useToast";
 import { ToastContainer } from "@/components/ui/Toast";
@@ -305,8 +305,10 @@ const PasswordField = ({
 
 // ===================== MAIN COMPONENT =====================
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") ?? "/";
   const toast = useToast();
   const otpEnabled = isOtpAuthEnabledClient;
 
@@ -440,7 +442,7 @@ export default function LoginPage() {
 
       if (!data.requireOtp) {
         toast.success(data.message || "Login berhasil!");
-        setTimeout(() => router.push("/"), 700);
+        setTimeout(() => router.push(redirectTo), 700);
         return;
       }
 
@@ -550,7 +552,7 @@ export default function LoginPage() {
 
       if (data.success) {
         toast.success(data.message || "Login berhasil!");
-        setTimeout(() => router.push("/"), 1000);
+        setTimeout(() => router.push(redirectTo), 1000);
       } else {
         toast.error(data.message);
       }
@@ -622,7 +624,7 @@ export default function LoginPage() {
 
         if (data.success) {
           toast.success(data.message || "Akun berhasil dibuat!");
-          setTimeout(() => router.push("/"), 1000);
+          setTimeout(() => router.push(redirectTo), 1000);
         } else {
           toast.error(data.message || "Registrasi gagal.");
         }
@@ -738,7 +740,7 @@ export default function LoginPage() {
 
       if (data.success) {
         toast.success(data.message || "Akun berhasil dibuat!");
-        setTimeout(() => router.push("/"), 1200);
+        setTimeout(() => router.push(redirectTo), 1200);
       } else {
         toast.error(data.message);
       }
@@ -1400,5 +1402,13 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

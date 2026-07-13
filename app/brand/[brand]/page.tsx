@@ -13,6 +13,7 @@ import {
   DEFAULT_PAYMENT_GATEWAY_FEE_CONFIG,
   PaymentGatewayFeeConfig,
 } from "@/lib/payment-gateway-fee";
+import { isLoginRequiredForPurchaseClient } from "@/lib/auth-config";
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -451,6 +452,10 @@ export default function BrandDetailPage({
     inputFields.every((f) => !f.required || (fieldValues[f.key]?.trim().length ?? 0) >= 2);
 
   const handleCheckout = async () => {
+    if (isLoginRequiredForPurchaseClient && !isLoggedIn) {
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     if (!selectedProduct) {
       toast.error("Pilih produk terlebih dahulu.");
       return;

@@ -19,6 +19,7 @@ import {
   InsufficientBalanceError,
   NotFoundError,
 } from "@/src/core/domain/errors/domain.errors";
+import { isLoginRequiredForPurchase } from "@/lib/auth-config";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,13 @@ export async function POST(request: Request) {
     // ── 3. Get user session (null for guest) ───────────────────────────────
     const session = await getSession();
     const userId = session.isLoggedIn && session.userId ? session.userId : null;
+
+    if (isLoginRequiredForPurchase() && !userId) {
+      return NextResponse.json(
+        { success: false, error: "Kamu harus login terlebih dahulu untuk melakukan pembelian." },
+        { status: 401 }
+      );
+    }
 
     // ── 4. Resolve voucher discount (lightweight — product price needed) ───
     // Fetch product price to compute discount accurately

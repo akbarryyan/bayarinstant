@@ -12,6 +12,7 @@ import {
   DEFAULT_PAYMENT_GATEWAY_FEE_CONFIG,
   PaymentGatewayFeeConfig,
 } from "@/lib/payment-gateway-fee";
+import { isLoginRequiredForPurchaseClient } from "@/lib/auth-config";
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -244,6 +245,10 @@ export default function JokiPage() {
 
   // ── Checkout handler ──────────────────────────────────────────────────────
   const handleCheckout = async () => {
+    if (isLoginRequiredForPurchaseClient && !isLoggedIn) {
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     if (!selectedProduct) { toast.error("Pilih layanan joki terlebih dahulu."); return; }
     if (!username.trim()) { toast.error("Masukkan Username/Email akun game."); return; }
     if (!password.trim()) { toast.error("Masukkan Password akun game."); return; }
