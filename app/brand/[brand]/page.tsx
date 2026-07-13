@@ -453,7 +453,8 @@ export default function BrandDetailPage({
 
   const handleCheckout = async () => {
     if (isLoginRequiredForPurchaseClient && !isLoggedIn) {
-      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      toast.error("Kamu harus login terlebih dahulu untuk melakukan pembelian.");
+      setTimeout(() => router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
     if (!selectedProduct) {
