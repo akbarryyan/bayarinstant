@@ -92,6 +92,8 @@ export default function SettingsPage() {
   // Transaksi settings
   const [requireLoginToPurchase, setRequireLoginToPurchase] = useState(true);
   const [requireLoginSaving, setRequireLoginSaving] = useState(false);
+  const [registerOtpRequired, setRegisterOtpRequired] = useState(true);
+  const [registerOtpSaving, setRegisterOtpSaving] = useState(false);
 
   // Fonnte WhatsApp token
   const [fonnteToken, setFonnteToken] = useState("");
@@ -150,6 +152,8 @@ export default function SettingsPage() {
         setSiteFavicon(raw.site_favicon ?? "");
         const reqLoginRaw = raw.REQUIRE_LOGIN_TO_PURCHASE ?? envDefaults.REQUIRE_LOGIN_TO_PURCHASE ?? "true";
         setRequireLoginToPurchase(reqLoginRaw !== "false");
+        const regOtpRaw = raw.REGISTER_OTP_REQUIRED ?? envDefaults.REGISTER_OTP_REQUIRED ?? "true";
+        setRegisterOtpRequired(regOtpRaw !== "false");
         setHeaderColor(raw.HEADER_COLOR ?? envDefaults.HEADER_COLOR ?? DEFAULT_HEADER_COLOR);
         setSiteDescription(raw.site_description ?? "");
         setSiteKeywords(raw.site_keywords ?? "");
@@ -201,6 +205,29 @@ export default function SettingsPage() {
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  async function toggleRegisterOtp() {
+    const newValue = !registerOtpRequired;
+    setRegisterOtpSaving(true);
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "REGISTER_OTP_REQUIRED", value: newValue ? "true" : "false" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRegisterOtpRequired(newValue);
+        toast.success(newValue ? "Verifikasi OTP email saat daftar: AKTIF" : "Verifikasi OTP email saat daftar: NONAKTIF");
+      } else {
+        toast.error(data.error ?? "Gagal menyimpan");
+      }
+    } catch {
+      toast.error("Gagal menyimpan perubahan");
+    } finally {
+      setRegisterOtpSaving(false);
+    }
+  }
 
   async function toggleRequireLogin() {
     const newValue = !requireLoginToPurchase;
@@ -636,6 +663,49 @@ export default function SettingsPage() {
                         requireLoginToPurchase ? "translate-x-5" : "translate-x-0"
                       }`}
                     />
+                  )}
+                </button>
+              </div>
+            </div>
+            {/* Register OTP toggle */}
+            <div className="px-5 py-4 border-t border-slate-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-purple-50">
+                ✉️
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800">Verifikasi OTP Email Saat Daftar</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {registerOtpRequired
+                    ? "Pengguna baru wajib verifikasi kode OTP via email sebelum akun aktif."
+                    : "Akun langsung dibuat tanpa verifikasi email."}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  registerOtpRequired
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-slate-100 text-slate-500"
+                }`}>
+                  {registerOtpRequired ? "AKTIF" : "NONAKTIF"}
+                </span>
+                <button
+                  onClick={toggleRegisterOtp}
+                  disabled={registerOtpSaving}
+                  role="switch"
+                  aria-checked={registerOtpRequired}
+                  aria-label="Toggle verifikasi OTP email saat daftar"
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                    registerOtpRequired ? "bg-purple-500" : "bg-slate-300"
+                  }`}
+                >
+                  {registerOtpSaving ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent text-slate-400" />
+                    </span>
+                  ) : (
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                      registerOtpRequired ? "translate-x-5" : "translate-x-0"
+                    }`} />
                   )}
                 </button>
               </div>

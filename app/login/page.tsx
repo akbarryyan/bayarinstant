@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Quicksand } from "@/lib/fonts";
 import { useToast } from "@/hooks/useToast";
 import { ToastContainer } from "@/components/ui/Toast";
-import { isOtpAuthEnabledClient } from "@/lib/auth-config";
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -310,7 +309,7 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";
   const toast = useToast();
-  const otpEnabled = isOtpAuthEnabledClient;
+  const [registerOtpRequired, setRegisterOtpRequired] = useState(true);
 
   // --- Tab state ---
   const [activeTab, setActiveTab] = useState<Tab>("login");
@@ -325,11 +324,6 @@ function LoginPageContent() {
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  // Login OTP state
-  const [loginStep, setLoginStep] = useState<"credentials" | "otp">("credentials");
-  const [loginOtp, setLoginOtp] = useState(["", "", "", "", "", ""]);
-  const [loginCountdown, setLoginCountdown] = useState(0);
-
   // ========================
   // REGISTER STATE
   // ========================
@@ -341,8 +335,7 @@ function LoginPageContent() {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
 
-  // Register OTP state
-  const [regOtpTarget, setRegOtpTarget] = useState<OtpTarget>("whatsapp");
+  // Register OTP state — selalu via email
   const [regStep, setRegStep] = useState<"form" | "otp">("form");
   const [regOtp, setRegOtp] = useState(["", "", "", "", "", ""]);
   const [regCountdown, setRegCountdown] = useState(0);
@@ -357,8 +350,6 @@ function LoginPageContent() {
     }
     if (requestedTab === "login") {
       setActiveTab("login");
-      setLoginStep("credentials");
-      setLoginOtp(["", "", "", "", "", ""]);
     }
   }, []);
 
@@ -366,19 +357,13 @@ function LoginPageContent() {
     fetch("/api/site-branding")
       .then((res) => res.json())
       .then((data) => {
-        if (data?.data?.site_name) {
-          setSiteName(data.data.site_name);
+        if (data?.data?.site_name) setSiteName(data.data.site_name);
+        if (data?.data?.register_otp_required != null) {
+          setRegisterOtpRequired(data.data.register_otp_required);
         }
       })
       .catch(() => {});
   }, []);
-
-  // --- Countdown timers ---
-  useEffect(() => {
-    if (loginCountdown <= 0) return;
-    const t = setTimeout(() => setLoginCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [loginCountdown]);
 
   useEffect(() => {
     if (regCountdown <= 0) return;
@@ -386,10 +371,8 @@ function LoginPageContent() {
     return () => clearTimeout(t);
   }, [regCountdown]);
 
-  // Reset login step when switching methods
+  // Reset form when switching login methods
   useEffect(() => {
-    setLoginStep("credentials");
-    setLoginOtp(["", "", "", "", "", ""]);
     setLoginIdentifier("");
     setLoginPassword("");
   }, [loginMethod]);
@@ -440,124 +423,11 @@ function LoginPageContent() {
         return;
       }
 
-      if (!data.requireOtp) {
-        toast.success(data.message || "Login berhasil!");
-        setTimeout(() => router.push(redirectTo), 700);
-        return;
-      }
-
-      // Step 2: Auto-send OTP
-      const otpPayload: Record<string, string> = {
-        purpose: "LOGIN",
-        target: loginMethod,
-      };
-      if (loginMethod === "whatsapp") {
-        otpPayload.phone = loginIdentifier.trim();
-      } else {
-        otpPayload.email = loginIdentifier.trim();
-      }
-
-      const otpRes = await fetch("/api/auth/otp/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(otpPayload),
-      });
-      const otpData = await otpRes.json();
-
-      if (otpData.success) {
-        toast.success(otpData.message);
-        setLoginStep("otp");
-        setLoginOtp(["", "", "", "", "", ""]);
-        setLoginCountdown(60);
-      } else {
-        toast.error(otpData.message || "Gagal mengirim OTP.");
-      }
+      // Login selalu langsung tanpa OTP
+      toast.success(data.message || "Login berhasil!");
+      setTimeout(() => router.push(redirectTo), 700);
     } catch {
       toast.error("Koneksi bermasalah. Periksa jaringan Anda.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Resend Login OTP
-   */
-  const handleResendLoginOtp = useCallback(async () => {
-    if (isLoading || loginCountdown > 0) return;
-
-    setIsLoading(true);
-    try {
-      const otpPayload: Record<string, string> = {
-        purpose: "LOGIN",
-        target: loginMethod,
-      };
-      if (loginMethod === "whatsapp") {
-        otpPayload.phone = loginIdentifier.trim();
-      } else {
-        otpPayload.email = loginIdentifier.trim();
-      }
-
-      const res = await fetch("/api/auth/otp/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(otpPayload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success(data.message);
-        setLoginOtp(["", "", "", "", "", ""]);
-        setLoginCountdown(60);
-      } else {
-        toast.error(data.message);
-      }
-    } catch {
-      toast.error("Koneksi bermasalah.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading, loginCountdown, loginMethod, loginIdentifier, toast]);
-
-  /**
-   * Verify Login OTP
-   */
-  const handleVerifyLoginOtp = async () => {
-    if (isLoading) return;
-
-    const code = loginOtp.join("");
-    if (code.length !== 6) {
-      toast.error("Masukkan 6 digit kode OTP.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const payload: Record<string, string> = {
-        code,
-        purpose: "LOGIN",
-        target: loginMethod,
-      };
-      if (loginMethod === "whatsapp") {
-        payload.phone = loginIdentifier.trim();
-      } else {
-        payload.email = loginIdentifier.trim();
-      }
-
-      const res = await fetch("/api/auth/otp/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success(data.message || "Login berhasil!");
-        setTimeout(() => router.push(redirectTo), 1000);
-      } else {
-        toast.error(data.message);
-      }
-    } catch {
-      toast.error("Koneksi bermasalah.");
     } finally {
       setIsLoading(false);
     }
@@ -566,49 +436,25 @@ function LoginPageContent() {
   // ===================== REGISTER HANDLERS =====================
 
   /**
-   * Register Step 1: Validate form & send OTP
+   * Register Step 1: Validate form & send OTP via email, atau langsung daftar jika OTP dinonaktifkan
    */
   const handleRegisterSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
-    // Validate
-    if (!regName.trim()) {
-      toast.error("Nama wajib diisi.");
-      return;
-    }
-    if (regName.trim().length < 2) {
-      toast.error("Nama minimal 2 karakter.");
-      return;
-    }
-    if (!regEmail.trim()) {
-      toast.error("Email wajib diisi.");
-      return;
-    }
-    if (!regEmail.includes("@")) {
-      toast.error("Format email tidak valid.");
-      return;
-    }
-    if (!regPhone.trim()) {
-      toast.error("Nomor WhatsApp wajib diisi.");
-      return;
-    }
-    if (!regPassword) {
-      toast.error("Password wajib diisi.");
-      return;
-    }
-    if (!allPasswordRulesPassed(regPassword)) {
-      toast.error("Password belum memenuhi semua persyaratan.");
-      return;
-    }
-    if (regPassword !== regConfirmPassword) {
-      toast.error("Konfirmasi password tidak cocok.");
-      return;
-    }
+    if (!regName.trim()) { toast.error("Nama wajib diisi."); return; }
+    if (regName.trim().length < 2) { toast.error("Nama minimal 2 karakter."); return; }
+    if (!regEmail.trim()) { toast.error("Email wajib diisi."); return; }
+    if (!regEmail.includes("@")) { toast.error("Format email tidak valid."); return; }
+    if (!regPhone.trim()) { toast.error("Nomor WhatsApp wajib diisi."); return; }
+    if (!regPassword) { toast.error("Password wajib diisi."); return; }
+    if (!allPasswordRulesPassed(regPassword)) { toast.error("Password belum memenuhi semua persyaratan."); return; }
+    if (regPassword !== regConfirmPassword) { toast.error("Konfirmasi password tidak cocok."); return; }
 
     setIsLoading(true);
     try {
-      if (!otpEnabled) {
+      if (!registerOtpRequired) {
+        // Daftar langsung tanpa OTP
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -621,7 +467,6 @@ function LoginPageContent() {
           }),
         });
         const data = await res.json();
-
         if (data.success) {
           toast.success(data.message || "Akun berhasil dibuat!");
           setTimeout(() => router.push(redirectTo), 1000);
@@ -631,24 +476,13 @@ function LoginPageContent() {
         return;
       }
 
-      // Send OTP via selected target
-      const otpPayload: Record<string, string> = {
-        purpose: "REGISTER",
-        target: regOtpTarget,
-      };
-      if (regOtpTarget === "whatsapp") {
-        otpPayload.phone = regPhone.trim();
-      } else {
-        otpPayload.email = regEmail.trim();
-      }
-
+      // Kirim OTP via email
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(otpPayload),
+        body: JSON.stringify({ purpose: "REGISTER", target: "email", email: regEmail.trim() }),
       });
       const data = await res.json();
-
       if (data.success) {
         toast.success(data.message);
         setRegStep("otp");
@@ -665,30 +499,18 @@ function LoginPageContent() {
   };
 
   /**
-   * Resend Register OTP
+   * Resend Register OTP via email
    */
   const handleResendRegOtp = useCallback(async () => {
     if (isLoading || regCountdown > 0) return;
-
     setIsLoading(true);
     try {
-      const otpPayload: Record<string, string> = {
-        purpose: "REGISTER",
-        target: regOtpTarget,
-      };
-      if (regOtpTarget === "whatsapp") {
-        otpPayload.phone = regPhone.trim();
-      } else {
-        otpPayload.email = regEmail.trim();
-      }
-
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(otpPayload),
+        body: JSON.stringify({ purpose: "REGISTER", target: "email", email: regEmail.trim() }),
       });
       const data = await res.json();
-
       if (data.success) {
         toast.success(data.message);
         setRegOtp(["", "", "", "", "", ""]);
@@ -701,43 +523,32 @@ function LoginPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, regCountdown, regOtpTarget, regPhone, regEmail, toast]);
+  }, [isLoading, regCountdown, regEmail, toast]);
 
   /**
-   * Verify Register OTP
+   * Verify Register OTP (email)
    */
   const handleVerifyRegOtp = async () => {
     if (isLoading) return;
-
     const code = regOtp.join("");
-    if (code.length !== 6) {
-      toast.error("Masukkan 6 digit kode OTP.");
-      return;
-    }
+    if (code.length !== 6) { toast.error("Masukkan 6 digit kode OTP."); return; }
 
     setIsLoading(true);
     try {
-      const payload: Record<string, string> = {
-        code,
-        purpose: "REGISTER",
-        target: regOtpTarget,
-        name: regName.trim(),
-        regPhone: regPhone.trim(),
-        regEmail: regEmail.trim(),
-      };
-      if (regOtpTarget === "whatsapp") {
-        payload.phone = regPhone.trim();
-      } else {
-        payload.email = regEmail.trim();
-      }
-
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          code,
+          purpose: "REGISTER",
+          target: "email",
+          email: regEmail.trim(),
+          name: regName.trim(),
+          regPhone: regPhone.trim(),
+          regEmail: regEmail.trim(),
+        }),
       });
       const data = await res.json();
-
       if (data.success) {
         toast.success(data.message || "Akun berhasil dibuat!");
         setTimeout(() => router.push(redirectTo), 1200);
@@ -871,10 +682,7 @@ function LoginPageContent() {
                   onClick={() => {
                     setActiveTab(tab);
                     // Reset states
-                    if (tab === "login") {
-                      setLoginStep("credentials");
-                      setLoginOtp(["", "", "", "", "", ""]);
-                    } else {
+                    if (tab !== "login") {
                       setRegStep("form");
                       setRegOtp(["", "", "", "", "", ""]);
                     }
@@ -900,153 +708,64 @@ function LoginPageContent() {
                     <p className="text-sm text-slate-500 mt-0.5">Masuk ke akun {siteName} kamu</p>
                   </div>
 
-                  {loginStep === "credentials" ? (
-                    <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
-                      {/* Login method toggle */}
-                      <MethodToggle
-                        method={loginMethod}
-                        onChange={setLoginMethod}
-                        label="Login via"
-                      />
+                  <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
+                    {/* Login method toggle — pilih identifier: WA atau email */}
+                    <MethodToggle
+                      method={loginMethod}
+                      onChange={setLoginMethod}
+                      label="Login via"
+                    />
 
-                      {/* Identifier (WA / Email) */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                          {loginMethod === "whatsapp" ? "Nomor WhatsApp" : "Email"}
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                            {loginMethod === "whatsapp" ? <PhoneIcon /> : <EmailIcon />}
-                          </span>
-                          <input
-                            type={loginMethod === "whatsapp" ? "tel" : "email"}
-                            placeholder={
-                              loginMethod === "whatsapp" ? "08xxxxxxxxxx" : "email@kamu.com"
-                            }
-                            value={loginIdentifier}
-                            onChange={(e) =>
-                              setLoginIdentifier(
-                                loginMethod === "whatsapp"
-                                  ? e.target.value.replace(/[^\d+]/g, "")
-                                  : e.target.value
-                              )
-                            }
-                            className={`w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 transition ${
+                    {/* Identifier (WA / Email) */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        {loginMethod === "whatsapp" ? "Nomor WhatsApp" : "Email"}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                          {loginMethod === "whatsapp" ? <PhoneIcon /> : <EmailIcon />}
+                        </span>
+                        <input
+                          type={loginMethod === "whatsapp" ? "tel" : "email"}
+                          placeholder={loginMethod === "whatsapp" ? "08xxxxxxxxxx" : "email@kamu.com"}
+                          value={loginIdentifier}
+                          onChange={(e) =>
+                            setLoginIdentifier(
                               loginMethod === "whatsapp"
-                                ? "focus:border-[#25D366] focus:ring-green-100"
-                                : "focus:border-[#003D99] focus:ring-blue-100"
-                            }`}
-                            autoComplete={loginMethod === "whatsapp" ? "tel" : "email"}
-                            disabled={isLoading}
-                          />
-                        </div>
+                                ? e.target.value.replace(/[^\d+]/g, "")
+                                : e.target.value
+                            )
+                          }
+                          className={`w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 transition ${
+                            loginMethod === "whatsapp"
+                              ? "focus:border-[#25D366] focus:ring-green-100"
+                              : "focus:border-[#003D99] focus:ring-blue-100"
+                          }`}
+                          autoComplete={loginMethod === "whatsapp" ? "tel" : "email"}
+                          disabled={isLoading}
+                        />
                       </div>
-
-                      {/* Password */}
-                      <PasswordField
-                        label="Password"
-                        placeholder="Masukkan password"
-                        value={loginPassword}
-                        onChange={setLoginPassword}
-                        show={showLoginPassword}
-                        toggleShow={() => setShowLoginPassword((v) => !v)}
-                        autoComplete="current-password"
-                        isLoading={isLoading}
-                      />
-
-                      {/* Info: OTP otomatis dikirim */}
-                      <div className="bg-blue-50 rounded-xl px-4 py-3 flex items-start gap-2">
-                        <svg
-                          className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <p className="text-xs text-blue-700">
-                          {otpEnabled ? (
-                            <>
-                              Setelah password valid, kode OTP akan otomatis dikirim ke{" "}
-                              <span className="font-bold">
-                                {loginMethod === "whatsapp" ? "WhatsApp" : "Email"}
-                              </span>{" "}
-                              kamu.
-                            </>
-                          ) : (
-                            <>OTP sedang dinonaktifkan. Login akan langsung masuk setelah password valid.</>
-                          )}
-                        </p>
-                      </div>
-
-                      <SubmitBtn
-                        label="Masuk"
-                        loadingLabel="Memproses..."
-                        type="submit"
-                        isLoading={isLoading}
-                      />
-                    </form>
-                  ) : (
-                    /* ---- LOGIN OTP STEP ---- */
-                    <div className="flex flex-col gap-4">
-                      {/* Back button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLoginStep("credentials");
-                          setLoginOtp(["", "", "", "", "", ""]);
-                        }}
-                        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition w-fit"
-                      >
-                        <BackArrowIcon />
-                        Kembali
-                      </button>
-
-                      <div className="text-center">
-                        <p className="text-sm text-slate-600">
-                          Kode OTP dikirim ke{" "}
-                          <span className="font-bold text-slate-800">
-                            {loginMethod === "whatsapp" ? "WhatsApp " : "Email "}
-                            {loginIdentifier}
-                          </span>
-                        </p>
-                      </div>
-
-                      {/* OTP input */}
-                      <OtpInput value={loginOtp} onChange={setLoginOtp} disabled={isLoading} />
-
-                      {/* Countdown & resend */}
-                      <div className="text-center">
-                        {loginCountdown > 0 ? (
-                          <p className="text-xs text-slate-400">
-                            Kirim ulang dalam{" "}
-                            <span className="font-semibold text-slate-600">{loginCountdown}s</span>
-                          </p>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleResendLoginOtp}
-                            disabled={isLoading}
-                            className="text-xs font-semibold text-[#003D99] hover:text-[#002966] transition disabled:opacity-50"
-                          >
-                            Kirim ulang OTP
-                          </button>
-                        )}
-                      </div>
-
-                      <SubmitBtn
-                        label="Verifikasi"
-                        loadingLabel="Memverifikasi..."
-                        onClick={handleVerifyLoginOtp}
-                        isLoading={isLoading}
-                      />
                     </div>
-                  )}
+
+                    {/* Password */}
+                    <PasswordField
+                      label="Password"
+                      placeholder="Masukkan password"
+                      value={loginPassword}
+                      onChange={setLoginPassword}
+                      show={showLoginPassword}
+                      toggleShow={() => setShowLoginPassword((v) => !v)}
+                      autoComplete="current-password"
+                      isLoading={isLoading}
+                    />
+
+                    <SubmitBtn
+                      label="Masuk"
+                      loadingLabel="Memproses..."
+                      type="submit"
+                      isLoading={isLoading}
+                    />
+                  </form>
 
                   {/* Forgot password */}
                   <p className="text-center">
@@ -1083,14 +802,6 @@ function LoginPageContent() {
 
                   {regStep === "form" ? (
                     <form onSubmit={handleRegisterSendOtp} className="flex flex-col gap-4">
-                      {otpEnabled && (
-                        <MethodToggle
-                          method={regOtpTarget}
-                          onChange={setRegOtpTarget}
-                          label="Verifikasi akun via"
-                        />
-                      )}
-
                       {/* Nama */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -1283,24 +994,14 @@ function LoginPageContent() {
                         </div>
                       </div>
 
-                      {otpEnabled ? (
-                        <div className="flex flex-col gap-2">
-                          <MethodToggle
-                            method={regOtpTarget}
-                            onChange={setRegOtpTarget}
-                            label="Kirim OTP via"
-                          />
-                          <p className="text-xs text-slate-400">
-                            Kode verifikasi akan dikirim ke{" "}
-                            <span className="font-semibold text-slate-600">
-                              {regOtpTarget === "whatsapp" ? "WhatsApp" : "Email"}
-                            </span>{" "}
-                            kamu
-                          </p>
+                      {registerOtpRequired ? (
+                        <div className="bg-blue-50 rounded-xl px-4 py-3 text-xs text-blue-700 flex items-center gap-2">
+                          <EmailIcon />
+                          <span>Kode verifikasi akan dikirim ke <span className="font-semibold">{regEmail || "email kamu"}</span></span>
                         </div>
                       ) : (
                         <div className="bg-amber-50 rounded-xl px-4 py-3 text-xs text-amber-700">
-                          OTP sedang dinonaktifkan. Setelah daftar, akun akan langsung dibuat dan login otomatis.
+                          Akun akan langsung dibuat tanpa verifikasi email.
                         </div>
                       )}
 
@@ -1314,8 +1015,8 @@ function LoginPageContent() {
                       </p>
 
                       <SubmitBtn
-                        label="Kirim OTP & Daftar"
-                        loadingLabel="Mengirim..."
+                        label={registerOtpRequired ? "Kirim OTP & Daftar" : "Daftar"}
+                        loadingLabel="Memproses..."
                         type="submit"
                         isLoading={isLoading}
                       />
@@ -1340,9 +1041,7 @@ function LoginPageContent() {
                         <p className="text-sm text-slate-600">
                           Kode OTP dikirim ke{" "}
                           <span className="font-bold text-slate-800">
-                            {regOtpTarget === "whatsapp"
-                              ? `WhatsApp ${regPhone}`
-                              : `Email ${regEmail}`}
+                            {`Email ${regEmail}`}
                           </span>
                         </p>
                       </div>

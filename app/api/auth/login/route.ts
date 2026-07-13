@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
-import { isOtpAuthEnabled } from "@/lib/auth-config";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
 
@@ -121,30 +120,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!isOtpAuthEnabled()) {
-      const session = await getSession();
-      session.isLoggedIn = true;
-      session.userId = user.id;
-      session.email = user.email ?? "";
-      session.phone = user.phone ?? "";
-      session.name = user.name ?? "";
-      session.role = user.role;
-      await session.save();
+    // Login selalu langsung tanpa OTP
+    const session = await getSession();
+    session.isLoggedIn = true;
+    session.userId = user.id;
+    session.email = user.email ?? "";
+    session.phone = user.phone ?? "";
+    session.name = user.name ?? "";
+    session.role = user.role;
+    await session.save();
 
-      return NextResponse.json({
-        success: true,
-        message: "Login berhasil! Selamat datang kembali.",
-        requireOtp: false,
-        userId: user.id,
-      });
-    }
-
-    // --- Password valid! Return success without setting session ---
-    // Session akan di-set setelah OTP verified
     return NextResponse.json({
       success: true,
-      message: "Password valid. Silakan verifikasi OTP.",
-      requireOtp: true,
+      message: "Login berhasil! Selamat datang kembali.",
+      requireOtp: false,
       userId: user.id,
     });
   } catch (error) {
