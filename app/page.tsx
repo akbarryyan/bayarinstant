@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/useToast";
+import { ToastContainer } from "@/components/ui/Toast";
 import { Quicksand } from "@/lib/fonts";
 import Header from "@/components/home/Header";
 import BannerCarousel from "@/components/home/BannerCarousel";
@@ -113,6 +115,7 @@ function HomeSkeleton({ headerColor = DEFAULT_HEADER_COLOR }: { headerColor?: st
 
 export default function Home() {
   const router = useRouter();
+  const toast = useToast();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeTypeGroup, setActiveTypeGroup] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -186,10 +189,17 @@ export default function Home() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-      setProfileOpen(false);
-      router.refresh();
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.ok) {
+        toast.success("Berhasil logout. Sampai jumpa!");
+        setUser(null);
+        setProfileOpen(false);
+        router.refresh();
+      } else {
+        toast.error("Gagal logout. Coba lagi.");
+      }
+    } catch {
+      toast.error("Gagal logout. Coba lagi.");
     } finally {
       setLoggingOut(false);
     }
@@ -525,6 +535,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

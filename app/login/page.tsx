@@ -546,6 +546,7 @@ function LoginPageContent() {
           name: regName.trim(),
           regPhone: regPhone.trim(),
           regEmail: regEmail.trim(),
+          password: regPassword,
         }),
       });
       const data = await res.json();

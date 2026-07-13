@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
 import { getSiteName } from "@/lib/site-config";
 import { prisma } from "@/src/infra/db/prisma";
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     const siteName = await getSiteName();
     const body = await req.json();
-    const { phone, email, code, purpose, name, target } = body;
+    const { phone, email, code, purpose, name, target, password } = body;
     // target: "whatsapp" | "email"
 
     // --- Validasi input ---
@@ -39,6 +40,13 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { success: false, message: "Nama minimal 2 karakter." },
+        { status: 400 }
+      );
+    }
+
+    if (purpose === "REGISTER" && (typeof password !== "string" || password.length < 6)) {
+      return NextResponse.json(
+        { success: false, message: "Password minimal 6 karakter." },
         { status: 400 }
       );
     }
@@ -237,11 +245,14 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      const passwordHash = await bcrypt.hash(password, 10);
+
       user = await prisma.user.create({
         data: {
           name: name.trim(),
           phone: regPhone,
           email: regEmail,
+          passwordHash,
           role: "MEMBER",
           isActive: true,
         },
