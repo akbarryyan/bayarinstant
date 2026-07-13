@@ -89,6 +89,10 @@ export default function SettingsPage() {
   const [siteKeywords, setSiteKeywords] = useState("");
   const [siteSaving, setSiteSaving] = useState<string | null>(null);
 
+  // Transaksi settings
+  const [requireLoginToPurchase, setRequireLoginToPurchase] = useState(true);
+  const [requireLoginSaving, setRequireLoginSaving] = useState(false);
+
   // Fonnte WhatsApp token
   const [fonnteToken, setFonnteToken] = useState("");
   const [showFonnteToken, setShowFonnteToken] = useState(false);
@@ -144,6 +148,8 @@ export default function SettingsPage() {
         setSiteName(raw.site_name ?? "Website");
         setSiteLogo(raw.site_logo ?? "");
         setSiteFavicon(raw.site_favicon ?? "");
+        const reqLoginRaw = raw.REQUIRE_LOGIN_TO_PURCHASE ?? envDefaults.REQUIRE_LOGIN_TO_PURCHASE ?? "true";
+        setRequireLoginToPurchase(reqLoginRaw !== "false");
         setHeaderColor(raw.HEADER_COLOR ?? envDefaults.HEADER_COLOR ?? DEFAULT_HEADER_COLOR);
         setSiteDescription(raw.site_description ?? "");
         setSiteKeywords(raw.site_keywords ?? "");
@@ -195,6 +201,29 @@ export default function SettingsPage() {
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  async function toggleRequireLogin() {
+    const newValue = !requireLoginToPurchase;
+    setRequireLoginSaving(true);
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "REQUIRE_LOGIN_TO_PURCHASE", value: newValue ? "true" : "false" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRequireLoginToPurchase(newValue);
+        toast.success(newValue ? "Wajib login untuk beli: AKTIF" : "Wajib login untuk beli: NONAKTIF");
+      } else {
+        toast.error(data.error ?? "Gagal menyimpan");
+      }
+    } catch {
+      toast.error("Gagal menyimpan perubahan");
+    } finally {
+      setRequireLoginSaving(false);
+    }
+  }
 
   async function toggleMode(provider: ProviderDef, currentMode: string) {
     const newMode = currentMode === provider.offValue ? provider.onValue : provider.offValue;
@@ -557,6 +586,60 @@ export default function SettingsPage() {
                 );
               })
             )}
+          </div>
+
+          {/* ── Pengaturan Transaksi ────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-bold text-slate-700">🛒 Pengaturan Transaksi</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Konfigurasi alur pembelian untuk pengguna.
+              </p>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-blue-50">
+                🔐
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800">Wajib Login Sebelum Beli</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {requireLoginToPurchase
+                    ? "Pengguna harus login/daftar dulu sebelum bisa melakukan pembelian."
+                    : "Pengguna bisa beli sebagai guest tanpa perlu login."}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  requireLoginToPurchase
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-slate-100 text-slate-500"
+                }`}>
+                  {requireLoginToPurchase ? "AKTIF" : "NONAKTIF"}
+                </span>
+                <button
+                  onClick={toggleRequireLogin}
+                  disabled={requireLoginSaving}
+                  role="switch"
+                  aria-checked={requireLoginToPurchase}
+                  aria-label="Toggle wajib login sebelum beli"
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                    requireLoginToPurchase ? "bg-blue-500" : "bg-slate-300"
+                  }`}
+                >
+                  {requireLoginSaving ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent text-slate-400" />
+                    </span>
+                  ) : (
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        requireLoginToPurchase ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

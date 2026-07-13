@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     const session = await getSession();
     const userId = session.isLoggedIn && session.userId ? session.userId : null;
 
-    if (isLoginRequiredForPurchase() && !userId) {
+    if (await isLoginRequiredForPurchase() && !userId) {
       return NextResponse.json(
         { success: false, error: "Kamu harus login terlebih dahulu untuk melakukan pembelian." },
         { status: 401 }

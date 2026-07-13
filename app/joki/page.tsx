@@ -12,7 +12,6 @@ import {
   DEFAULT_PAYMENT_GATEWAY_FEE_CONFIG,
   PaymentGatewayFeeConfig,
 } from "@/lib/payment-gateway-fee";
-import { isLoginRequiredForPurchaseClient } from "@/lib/auth-config";
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -91,6 +90,7 @@ export default function JokiPage() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [requireLoginToPurchase, setRequireLoginToPurchase] = useState(true);
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [feeConfig, setFeeConfig] = useState<PaymentGatewayFeeConfig>(DEFAULT_PAYMENT_GATEWAY_FEE_CONFIG);
   const [pgMethods, setPgMethods] = useState<
@@ -121,6 +121,17 @@ export default function JokiPage() {
     invoiceId?: string;
     mode: string;
   } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/site-branding")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.data?.require_login_to_purchase != null) {
+          setRequireLoginToPurchase(d.data.require_login_to_purchase);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // ── Load catalog ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -245,7 +256,7 @@ export default function JokiPage() {
 
   // ── Checkout handler ──────────────────────────────────────────────────────
   const handleCheckout = async () => {
-    if (isLoginRequiredForPurchaseClient && !isLoggedIn) {
+    if (requireLoginToPurchase && !isLoggedIn) {
       toast.error("Kamu harus login terlebih dahulu untuk melakukan pembelian.");
       setTimeout(() => router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
