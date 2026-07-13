@@ -294,7 +294,7 @@ export default function AdminProfilePage() {
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                           Menyimpan...
                         </span>
-                      ) : "💾 Simpan Profil"}
+                      ) : "Simpan Profil"}
                     </button>
                   </form>
                 </div>

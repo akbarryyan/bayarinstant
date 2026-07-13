@@ -266,10 +266,10 @@ export default function SettingsPage() {
         setConfig((prev) =>
           prev
             ? {
-                ...prev,
-                raw: { ...prev.raw, [provider.key]: newMode },
-                modes: { ...prev.modes, [provider.modeKey]: newMode },
-              }
+              ...prev,
+              raw: { ...prev.raw, [provider.key]: newMode },
+              modes: { ...prev.modes, [provider.modeKey]: newMode },
+            }
             : prev
         );
         toast.success(
@@ -543,9 +543,8 @@ export default function SettingsPage() {
                 return (
                   <div key={provider.key} className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                     {/* Icon */}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
-                      isReal ? "bg-green-100" : "bg-amber-50"
-                    }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${isReal ? "bg-green-100" : "bg-amber-50"
+                      }`}>
                       {provider.icon}
                     </div>
 
@@ -553,11 +552,10 @@ export default function SettingsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-slate-800">{provider.label}</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isReal
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isReal
                             ? "bg-green-100 text-green-700"
                             : "bg-amber-100 text-amber-700"
-                        }`}>
+                          }`}>
                           {isReal ? provider.onLabel : provider.offLabel}
                         </span>
                         {isFromDB ? (
@@ -592,9 +590,8 @@ export default function SettingsPage() {
                         role="switch"
                         aria-checked={isReal}
                         aria-label={`Toggle ${provider.label} mode`}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                          isReal ? "bg-green-500" : "bg-slate-300"
-                        }`}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${isReal ? "bg-green-500" : "bg-slate-300"
+                          }`}
                       >
                         {isSaving ? (
                           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
@@ -602,9 +599,8 @@ export default function SettingsPage() {
                           </span>
                         ) : (
                           <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                              isReal ? "translate-x-5" : "translate-x-0"
-                            }`}
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${isReal ? "translate-x-5" : "translate-x-0"
+                              }`}
                           />
                         )}
                       </button>
@@ -636,11 +632,10 @@ export default function SettingsPage() {
                 </p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  requireLoginToPurchase
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${requireLoginToPurchase
                     ? "bg-blue-100 text-blue-700"
                     : "bg-slate-100 text-slate-500"
-                }`}>
+                  }`}>
                   {requireLoginToPurchase ? "AKTIF" : "NONAKTIF"}
                 </span>
                 <button
@@ -649,9 +644,8 @@ export default function SettingsPage() {
                   role="switch"
                   aria-checked={requireLoginToPurchase}
                   aria-label="Toggle wajib login sebelum beli"
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                    requireLoginToPurchase ? "bg-blue-500" : "bg-slate-300"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${requireLoginToPurchase ? "bg-blue-500" : "bg-slate-300"
+                    }`}
                 >
                   {requireLoginSaving ? (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
@@ -659,9 +653,8 @@ export default function SettingsPage() {
                     </span>
                   ) : (
                     <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                        requireLoginToPurchase ? "translate-x-5" : "translate-x-0"
-                      }`}
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${requireLoginToPurchase ? "translate-x-5" : "translate-x-0"
+                        }`}
                     />
                   )}
                 </button>
@@ -681,11 +674,10 @@ export default function SettingsPage() {
                 </p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  registerOtpRequired
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${registerOtpRequired
                     ? "bg-purple-100 text-purple-700"
                     : "bg-slate-100 text-slate-500"
-                }`}>
+                  }`}>
                   {registerOtpRequired ? "AKTIF" : "NONAKTIF"}
                 </span>
                 <button
@@ -694,18 +686,16 @@ export default function SettingsPage() {
                   role="switch"
                   aria-checked={registerOtpRequired}
                   aria-label="Toggle verifikasi OTP email saat daftar"
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                    registerOtpRequired ? "bg-purple-500" : "bg-slate-300"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${registerOtpRequired ? "bg-purple-500" : "bg-slate-300"
+                    }`}
                 >
                   {registerOtpSaving ? (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
                       <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent text-slate-400" />
                     </span>
                   ) : (
-                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                      registerOtpRequired ? "translate-x-5" : "translate-x-0"
-                    }`} />
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${registerOtpRequired ? "translate-x-5" : "translate-x-0"
+                      }`} />
                   )}
                 </button>
               </div>
@@ -836,15 +826,15 @@ export default function SettingsPage() {
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
                   <span className="text-[10px] text-slate-500 font-medium">Prioritas pembacaan adapter: database → .env</span>
                 </div>
                 <button
                   onClick={saveProviderCredentials}
                   disabled={siteSaving === "provider_credentials"}
-                  className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                  className="px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                 >
-                  {siteSaving === "provider_credentials" ? "Menyimpan…" : "💾 Simpan Kredensial Provider"}
+                  {siteSaving === "provider_credentials" ? "Menyimpan…" : "Simpan Kredensial Provider"}
                 </button>
               </div>
             </div>
@@ -874,9 +864,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveSiteSetting("site_name", siteName, "Nama Website")}
                     disabled={siteSaving === "site_name"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "site_name" ? "..." : "💾 Simpan"}
+                    {siteSaving === "site_name" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -891,9 +881,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveSiteSetting("site_logo", siteLogo, "Logo")}
                     disabled={siteSaving === "site_logo"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "site_logo" ? "..." : "💾 Simpan"}
+                    {siteSaving === "site_logo" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -908,9 +898,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveSiteSetting("site_favicon", siteFavicon, "Favicon")}
                     disabled={siteSaving === "site_favicon"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "site_favicon" ? "..." : "💾 Simpan"}
+                    {siteSaving === "site_favicon" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -942,9 +932,9 @@ export default function SettingsPage() {
                   <button
                     onClick={saveHeaderColor}
                     disabled={siteSaving === "HEADER_COLOR"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "HEADER_COLOR" ? "..." : "💾 Simpan"}
+                    {siteSaving === "HEADER_COLOR" ? "..." : "Simpan"}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">Berlaku untuk header utama di halaman publik dan halaman app.</p>
@@ -964,9 +954,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveSiteSetting("site_description", siteDescription, "Deskripsi")}
                     disabled={siteSaving === "site_description"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0 sm:self-start"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0 sm:self-start"
                   >
-                    {siteSaving === "site_description" ? "..." : "💾 Simpan"}
+                    {siteSaving === "site_description" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -985,9 +975,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveSiteSetting("site_keywords", siteKeywords, "Keywords")}
                     disabled={siteSaving === "site_keywords"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "site_keywords" ? "..." : "💾 Simpan"}
+                    {siteSaving === "site_keywords" ? "..." : "Simpan"}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">Pisahkan dengan koma. Digunakan untuk SEO.</p>
@@ -1064,9 +1054,9 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveSiteSetting("FONNTE_TOKEN", fonnteToken, "Fonnte Token")}
                     disabled={siteSaving === "FONNTE_TOKEN"}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#25D366] text-white text-xs font-bold hover:bg-[#1da851] transition disabled:opacity-50 flex-shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full bg-[#25D366] text-white text-xs font-bold hover:bg-[#1da851] transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "FONNTE_TOKEN" ? "..." : "💾 Simpan"}
+                    {siteSaving === "FONNTE_TOKEN" ? "..." : "Simpan"}
                   </button>
                 </div>
                 {fonnteToken ? (
@@ -1236,14 +1226,14 @@ export default function SettingsPage() {
                     disabled={smtpTestSending || !smtpUser || !smtpPass}
                     className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition disabled:opacity-50 flex-shrink-0"
                   >
-                    {smtpTestSending ? "Mengirim…" : "📤 Kirim Test Email"}
+                    {smtpTestSending ? "Mengirim…" : "Kirim Test Email"}
                   </button>
                   <button
                     onClick={saveSmtpSettings}
                     disabled={siteSaving === "smtp_all"}
-                    className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                    className="px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                   >
-                    {siteSaving === "smtp_all" ? "Menyimpan…" : "💾 Simpan Semua"}
+                    {siteSaving === "smtp_all" ? "Menyimpan…" : "Simpan Semua"}
                   </button>
                 </div>
               </div>
@@ -1522,7 +1512,7 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
                       <span className="text-[10px] text-amber-600 font-medium">Konfigurasi Poppay belum lengkap</span>
                     </div>
                   )}
@@ -1530,9 +1520,9 @@ export default function SettingsPage() {
                 <button
                   onClick={savePoppaySettings}
                   disabled={siteSaving === "poppay_all"}
-                  className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
+                  className="px-4 py-2 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 shrink-0"
                 >
-                  {siteSaving === "poppay_all" ? "Menyimpan…" : "💾 Simpan Konfigurasi Poppay"}
+                  {siteSaving === "poppay_all" ? "Menyimpan…" : "Simpan Konfigurasi Poppay"}
                 </button>
               </div>
             </div>

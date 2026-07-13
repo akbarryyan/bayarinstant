@@ -231,7 +231,7 @@ export default function AdminPromosPage() {
                 disabled={heroSaving || !heroImageUrl.trim()}
                 className="px-4 py-2.5 rounded-xl bg-[#6D28D9] hover:bg-purple-800 text-white text-xs font-bold transition disabled:opacity-50"
               >
-                {heroSaving ? "Menyimpan..." : "💾 Simpan"}
+                {heroSaving ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
           </div>

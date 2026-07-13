@@ -172,7 +172,7 @@ export default function BannersPage() {
                     <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Menyimpan...
                   </>
-                ) : "💾 Simpan"}
+                ) : "Simpan"}
               </button>
             </div>
           </div>
@@ -341,7 +341,7 @@ export default function BannersPage() {
                   disabled={taglineSaving}
                   className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0"
                 >
-                  {taglineSaving ? "..." : "💾 Simpan"}
+                  {taglineSaving ? "..." : "Simpan"}
                 </button>
               </div>
             </div>

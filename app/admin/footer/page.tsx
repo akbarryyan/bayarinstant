@@ -234,7 +234,7 @@ function FooterMenuEditor({
             disabled={saving === configKey}
             className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {saving === configKey ? "Menyimpan..." : "💾 Simpan"}
+            {saving === configKey ? "Menyimpan..." : "Simpan"}
           </button>
         </div>
       )}
@@ -413,7 +413,7 @@ export default function AdminFooterPage() {
                   <button onClick={() => save("footer_logo_url", logoUrl, "Logo")}
                     disabled={saving === "footer_logo_url"}
                     className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0">
-                    {saving === "footer_logo_url" ? "..." : "💾 Simpan"}
+                    {saving === "footer_logo_url" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -429,7 +429,7 @@ export default function AdminFooterPage() {
                   <button onClick={() => save("footer_tagline", tagline, "Tagline")}
                     disabled={saving === "footer_tagline"}
                     className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0">
-                    {saving === "footer_tagline" ? "..." : "💾 Simpan"}
+                    {saving === "footer_tagline" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -484,7 +484,7 @@ export default function AdminFooterPage() {
                 disabled={saving === "footer_payment_methods"}
                 className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50"
               >
-                {saving === "footer_payment_methods" ? "Menyimpan..." : "💾 Simpan"}
+                {saving === "footer_payment_methods" ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
           </div>
@@ -509,7 +509,7 @@ export default function AdminFooterPage() {
                   <button onClick={() => save("footer_company_name", companyName, "Nama Perusahaan")}
                     disabled={saving === "footer_company_name"}
                     className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0">
-                    {saving === "footer_company_name" ? "..." : "💾 Simpan"}
+                    {saving === "footer_company_name" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -526,7 +526,7 @@ export default function AdminFooterPage() {
                   <button onClick={() => save("footer_contact_phone", contactPhone, "Nomor WA")}
                     disabled={saving === "footer_contact_phone"}
                     className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0">
-                    {saving === "footer_contact_phone" ? "..." : "💾 Simpan"}
+                    {saving === "footer_contact_phone" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -543,7 +543,7 @@ export default function AdminFooterPage() {
                   <button onClick={() => save("footer_contact_email", contactEmail, "Email")}
                     disabled={saving === "footer_contact_email"}
                     className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50 flex-shrink-0">
-                    {saving === "footer_contact_email" ? "..." : "💾 Simpan"}
+                    {saving === "footer_contact_email" ? "..." : "Simpan"}
                   </button>
                 </div>
               </div>
@@ -634,7 +634,7 @@ export default function AdminFooterPage() {
                 disabled={saving === "footer_columns"}
                 className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50"
               >
-                {saving === "footer_columns" ? "Menyimpan..." : "💾 Simpan Kolom Footer"}
+                {saving === "footer_columns" ? "Menyimpan..." : "Simpan Kolom Footer"}
               </button>
             </div>
           </div>
@@ -687,7 +687,7 @@ export default function AdminFooterPage() {
                             disabled={saving === contentKey}
                             className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50"
                           >
-                            {saving === contentKey ? "Menyimpan..." : "💾 Simpan"}
+                            {saving === contentKey ? "Menyimpan..." : "Simpan"}
                           </button>
                         </div>
                       </div>
@@ -728,7 +728,7 @@ export default function AdminFooterPage() {
                 disabled={saving === "footer_social_links"}
                 className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50"
               >
-                {saving === "footer_social_links" ? "Menyimpan..." : "💾 Simpan"}
+                {saving === "footer_social_links" ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
           </div>
@@ -753,7 +753,7 @@ export default function AdminFooterPage() {
                 disabled={saving === "footer_copyright"}
                 className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-blue-700 transition disabled:opacity-50"
               >
-                {saving === "footer_copyright" ? "Menyimpan..." : "💾 Simpan"}
+                {saving === "footer_copyright" ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
           </div>
