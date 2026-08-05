@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ const DEFAULT_METHODS = [
  */
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     const count = await prisma.paymentMethod.count();
     if (count === 0) {
       await prisma.paymentMethod.createMany({
@@ -39,6 +42,8 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     const { key, label, group, imageUrl, sortOrder } = await req.json();
     if (!key || !label || !group) {
       return NextResponse.json({ success: false, error: "key, label, dan group wajib diisi." }, { status: 400 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     const { id } = await params;
     const body = await req.json();
 
@@ -43,6 +46,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     const { id } = await params;
     await prisma.paymentMethod.delete({ where: { id } });
     return NextResponse.json({ success: true });

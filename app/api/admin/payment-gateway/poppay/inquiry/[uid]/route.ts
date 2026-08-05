@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isPoppayConfigured, PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,8 @@ export async function GET(
   { params }: { params: Promise<{ uid: string }> }
 ) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     if (!(await isPoppayConfigured())) {
       return NextResponse.json(
         {

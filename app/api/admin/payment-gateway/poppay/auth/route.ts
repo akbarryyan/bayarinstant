@@ -3,11 +3,14 @@ import {
   getPoppayDebugConfigSummary,
   PoppayClient,
 } from "@/src/infra/payment/poppay/poppay.client";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     const summary = await getPoppayDebugConfigSummary();
     const missing: string[] = [];
 

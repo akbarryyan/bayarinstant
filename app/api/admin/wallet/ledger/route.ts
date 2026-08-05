@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,8 @@ export const dynamic = "force-dynamic";
  * Histori ledger entries untuk user tertentu
  */
 export async function GET(req: NextRequest) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const { searchParams } = new URL(req.url);
 
   const userId = searchParams.get("userId") ?? "";

@@ -5,11 +5,14 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { getSiteConfig, getSiteName } from "@/lib/site-config";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
     const host =
       (await getSiteConfig("SMTP_HOST")) || process.env.SMTP_HOST || "";
     const port =
