@@ -4,11 +4,14 @@
  */
 
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   try {
     const vouchers = await prisma.voucher.findMany({
       orderBy: { createdAt: "desc" },
@@ -44,6 +47,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   try {
     const body = await request.json().catch(() => null);
     if (!body) return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });

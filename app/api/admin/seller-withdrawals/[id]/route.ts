@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
@@ -61,6 +62,8 @@ export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const { id } = await context.params;
 
   let body: unknown;

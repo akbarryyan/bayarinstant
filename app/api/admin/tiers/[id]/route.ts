@@ -4,12 +4,15 @@
  * DELETE /api/admin/tiers/[id]  — delete tier (cannot delete if users assigned or if it's the only tier)
  */
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const { id } = await params;
   const tier = await prisma.userTier.findUnique({
     where: { id },
@@ -29,6 +32,8 @@ const UpdateSchema = z.object({
 });
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const { id } = await params;
 
   let body: unknown;
@@ -67,6 +72,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const { id } = await params;
 
   const tier = await prisma.userTier.findUnique({

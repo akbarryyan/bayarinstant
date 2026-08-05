@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,8 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/tickets — list all tickets for admin
  */
 export async function GET() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const tickets = await prisma.ticket.findMany({
     include: {
       user: { select: { id: true, name: true, email: true, phone: true } },

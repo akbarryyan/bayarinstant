@@ -3,12 +3,15 @@
  * POST /api/admin/tiers       — create a new tier
  */
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const [tiers, nullTierCount] = await Promise.all([
     prisma.userTier.findMany({
       orderBy: { sortOrder: "asc" },
@@ -37,6 +40,8 @@ const CreateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });

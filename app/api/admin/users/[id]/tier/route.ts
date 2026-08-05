@@ -2,6 +2,7 @@
  * PATCH /api/admin/users/[id]/tier  — assign or remove tier from a user
  */
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 
@@ -12,6 +13,8 @@ const Schema = z.object({
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
   const { id } = await params;
 
   let body: unknown;
