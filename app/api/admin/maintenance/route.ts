@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { requireAdmin } from "@/lib/admin-guard";
 import { getSiteConfig, setSiteConfig } from "@/lib/site-config";
 import { cookies } from "next/headers";
 
@@ -7,6 +8,9 @@ const KEY = "MAINTENANCE_MODE";
 
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const val = await getSiteConfig(KEY);
     return NextResponse.json({ success: true, enabled: val === "1" });
   } catch (err) {
