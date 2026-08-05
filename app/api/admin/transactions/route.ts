@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: Request) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const { searchParams } = new URL(request.url);
 
     // Filters
