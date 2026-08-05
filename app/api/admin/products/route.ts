@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const products = await prisma.product.findMany({
       orderBy: [
         { isActive: "desc" },
@@ -64,6 +68,9 @@ export async function GET() {
  */
 export async function PUT(request: Request) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const body = await request.json();
     const { id, margin, isActive } = body;
 

@@ -7,11 +7,15 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { imageRefSchema } from "@/lib/upload";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const promos = await prisma.promo.findMany({
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     });
@@ -34,6 +38,9 @@ const CreateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   let body: unknown;
   try { body = await request.json(); }
   catch { return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 }); }

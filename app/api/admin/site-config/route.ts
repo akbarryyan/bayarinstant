@@ -16,10 +16,14 @@ import {
   normalizeHexColor,
 } from "@/lib/site-config";
 import { initProviderModesFromDB } from "@/src/infra/providers/provider.factory";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   // Sync in-memory ProviderFactory from DB on each admin page load
   await initProviderModesFromDB();
 
@@ -69,6 +73,9 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -110,6 +117,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   const { searchParams } = new URL(request.url);
   const key = searchParams.get("key");
 

@@ -6,10 +6,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getHomeContent, setHomeContent, deleteSiteConfig } from "@/lib/site-config";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   const data = await getHomeContent();
   return NextResponse.json({ success: true, data });
 }
@@ -31,6 +35,9 @@ const PutSchema = z.object({
 });
 
 export async function PUT(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -51,6 +58,9 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   await deleteSiteConfig("HOME_CONTENT");
   const data = await getHomeContent(); // returns defaults
   return NextResponse.json({ success: true, data });

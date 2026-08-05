@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     // All distinct brand names from active products
     const productBrands = await prisma.product.findMany({
       where: { isActive: true },
@@ -50,6 +54,9 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const body = await request.json();
     const { brand, imageUrl } = body as { brand: string; imageUrl?: string };
 
@@ -78,6 +85,9 @@ export async function PUT(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const body = await request.json();
     const { brand, inputFields } = body as { brand: string; inputFields: object[] | null };
 
@@ -105,6 +115,9 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const body = await request.json();
     const { brand } = body as { brand: string };
 
