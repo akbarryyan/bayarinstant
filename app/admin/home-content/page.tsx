@@ -210,7 +210,7 @@ export default function HomeContentPage() {
           {/* Title */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">📝 Konten Halaman Utama</h1>
+              <h1 className="text-xl font-bold text-slate-800">Konten Halaman Utama</h1>
               <p className="text-sm text-slate-500 mt-0.5">
                 Kelola tag game dan FAQ yang tampil di halaman utama.
               </p>
@@ -249,7 +249,7 @@ export default function HomeContentPage() {
               {/* ── About Text ───────────────────────────────────────── */}
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
                 <div className="px-5 py-4 border-b border-slate-100">
-                  <h2 className="text-sm font-bold text-slate-700">📄 Teks About</h2>
+                  <h2 className="text-sm font-bold text-slate-700">Teks About</h2>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Paragraf deskripsi yang tampil di bagian About halaman utama
                   </p>
@@ -269,7 +269,7 @@ export default function HomeContentPage() {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-bold text-slate-700">🏷️ Tag Game</h2>
+                    <h2 className="text-sm font-bold text-slate-700">Tag Game</h2>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       {gameTags.length} tag · Tampil sebagai tombol di bagian About
                     </p>
@@ -331,7 +331,7 @@ export default function HomeContentPage() {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                   <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-slate-700">❓ FAQ</h2>
+                    <h2 className="text-sm font-bold text-slate-700">FAQ</h2>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       {faqs.length} pertanyaan<span className="hidden sm:inline"> · 5 pertama tampil, sisanya di &quot;Baca Selengkapnya&quot;</span>
                     </p>
@@ -346,7 +346,9 @@ export default function HomeContentPage() {
 
                 {faqs.length === 0 ? (
                   <div className="px-5 py-10 text-center">
-                    <div className="text-3xl mb-2">❓</div>
+                    <svg className="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <p className="text-sm font-semibold text-slate-500 mb-1">Belum ada FAQ</p>
                     <p className="text-xs text-slate-400">Klik &quot;+ Tambah&quot; untuk menambahkan pertanyaan.</p>
                   </div>

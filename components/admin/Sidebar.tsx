@@ -11,10 +11,16 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+// Cached across Sidebar remounts (the component is re-rendered on every admin
+// route change since it's mounted per-page rather than in a shared layout),
+// so navigating between pages doesn't flash back to the fallback logo/name.
+let cachedLogoUrl = "";
+let cachedSiteName = "Website";
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [logoUrl, setLogoUrl]     = useState("");
-  const [siteName, setSiteName]   = useState("Website");
+  const [logoUrl, setLogoUrl]     = useState(cachedLogoUrl);
+  const [siteName, setSiteName]   = useState(cachedSiteName);
   const [maintEnabled, setMaintEnabled] = useState(false);
   const [maintLoading, setMaintLoading] = useState(false);
 
@@ -42,8 +48,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     fetch("/api/footer-config")
       .then((r) => r.json())
       .then((d) => {
-        if (d.data?.footer_logo_url) setLogoUrl(d.data.footer_logo_url);
-        if (d.data?.footer_company_name) setSiteName(d.data.footer_company_name);
+        if (d.data?.footer_logo_url) {
+          cachedLogoUrl = d.data.footer_logo_url;
+          setLogoUrl(cachedLogoUrl);
+        }
+        if (d.data?.footer_company_name) {
+          cachedSiteName = d.data.footer_company_name;
+          setSiteName(cachedSiteName);
+        }
       })
       .catch(() => {});
   }, []);

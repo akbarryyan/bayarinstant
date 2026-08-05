@@ -153,7 +153,7 @@ export default function TiersPage() {
           {/* Title */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">🏷️ Tier Harga</h1>
+              <h1 className="text-xl font-bold text-slate-800">Tier Harga</h1>
               <p className="text-sm text-slate-500 mt-0.5">
                 Kelola tier pengguna.<span className="hidden sm:inline"> Tiap tier mendapat harga berbeda berdasarkan multiplier margin.</span>
               </p>
@@ -219,14 +219,17 @@ export default function TiersPage() {
                     <div className="text-center">
                       <p className="text-[11px] text-slate-400">
                         {tier.minOrders > 0
-                          ? `🔄 Auto-naik setelah ${tier.minOrders} transaksi`
-                          : "⚙️ Manual saja"}
+                          ? `Auto-naik setelah ${tier.minOrders} transaksi`
+                          : "Manual saja"}
                       </p>
                     </div>
 
                     {/* User count */}
-                    <p className="text-[11px] text-slate-400 text-center">
-                      👥 {tier._count.users} user
+                    <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400 text-center">
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a4 4 0 10-8 0" />
+                      </svg>
+                      {tier._count.users} user
                     </p>
 
                     {/* Actions */}

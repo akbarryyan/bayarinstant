@@ -294,7 +294,7 @@ export default function AdminMerchantsPage() {
           <Header onMenuClick={() => setSidebarOpen(true)} />
 
           <div>
-            <h1 className="text-xl font-bold text-slate-800">🏪 Kelola Merchant</h1>
+            <h1 className="text-xl font-bold text-slate-800">Kelola Merchant</h1>
             <p className="mt-0.5 text-sm text-slate-500">
               Lihat daftar merchant yang terdaftar, cek pemilik toko, dan aktifkan atau nonaktifkan merchant dari panel admin.
             </p>

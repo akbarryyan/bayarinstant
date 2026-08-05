@@ -148,7 +148,7 @@ export default function BannersPage() {
           {/* Title */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">🎨 Banner Carousel</h1>
+              <h1 className="text-xl font-bold text-slate-800">Banner Carousel</h1>
               <p className="text-sm text-slate-500 mt-0.5">
                 Kelola gambar carousel halaman utama.
                 <span className="hidden sm:inline"> Urutan dapat diatur dengan tombol panah.</span>
@@ -224,8 +224,12 @@ export default function BannersPage() {
                 ))
               ) : banners.length === 0 ? (
                 <div className="px-5 py-10 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-2xl">
-                    🖼️
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="8.5" cy="9.5" r="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 16l-5.5-5.5a2 2 0 00-2.83 0L4 19" />
+                    </svg>
                   </div>
                   <p className="text-sm font-semibold text-slate-500 mb-1">Belum ada banner</p>
                   <p className="text-xs text-slate-400">Tambahkan URL gambar di bawah untuk mulai.</p>
@@ -313,7 +317,11 @@ export default function BannersPage() {
           {/* Tips */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3.5">
             <div className="flex items-start gap-2.5">
-              <span className="text-base flex-shrink-0">💡</span>
+              <span className="text-amber-500 flex-shrink-0">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.44.98 1.14.98 1.85V16h5.04v-.25c0-.71.38-1.4.98-1.85A6 6 0 0012 3z" />
+                </svg>
+              </span>
               <p className="text-[11px] text-amber-700 leading-relaxed">
                 <strong>Tips:</strong> Gunakan gambar dengan rasio <strong>2:1</strong> (contoh: 1200×600 px) agar tampil optimal di carousel.
                 Perubahan langsung berlaku di halaman utama setelah disimpan — tanpa perlu restart server.

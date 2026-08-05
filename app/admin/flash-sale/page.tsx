@@ -205,7 +205,7 @@ export default function FlashSalePage() {
           {/* Title */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">⚡ Flash Sale</h1>
+              <h1 className="text-xl font-bold text-slate-800">Flash Sale</h1>
               <p className="text-sm text-slate-500 mt-0.5">
                 Kelola produk dan waktu flash sale di halaman utama.
               </p>
@@ -301,7 +301,9 @@ export default function FlashSalePage() {
 
                 {config.products.length === 0 ? (
                   <div className="px-5 py-10 text-center">
-                    <div className="text-3xl mb-2">⚡</div>
+                    <svg className="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                     <p className="text-sm font-semibold text-slate-500 mb-1">Belum ada produk</p>
                     <p className="text-xs text-slate-400">Klik "+ Tambah" untuk menambahkan produk flash sale.</p>
                   </div>
@@ -470,7 +472,12 @@ export default function FlashSalePage() {
                     <img src={brands.find((b) => b.brand === selectedBrand)!.imageUrl!} alt={selectedBrand}
                       className="w-8 h-8 object-contain rounded flex-shrink-0" />
                   ) : (
-                    <div className="w-8 h-8 rounded bg-purple-200 flex items-center justify-center text-sm flex-shrink-0">🏷️</div>
+                    <div className="w-8 h-8 rounded bg-purple-200 flex items-center justify-center text-sm flex-shrink-0">
+                      <svg className="h-4 w-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.169.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.008v.008H6V6z" />
+                      </svg>
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-purple-800 truncate">{selectedProduct.name}</p>
@@ -492,7 +499,7 @@ export default function FlashSalePage() {
                         <label className="text-[11px] font-semibold text-slate-500 block mb-1">Badge / Label Bonus</label>
                         <input type="text" value={extra.badge}
                           onChange={(e) => setExtra((f) => ({ ...f, badge: e.target.value }))}
-                          placeholder="🔥 50 + 6 Bonds 🔥"
+                          placeholder="50 + 6 Bonds"
                           className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-100 transition" />
                       </div>
                       {/* Flash sale price + original price */}

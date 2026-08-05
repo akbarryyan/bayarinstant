@@ -147,13 +147,19 @@ export default function ProviderStatus() {
                   {/* Stats row */}
                   <div className="mt-1.5 flex items-center gap-3 flex-wrap">
                     {p.avgLatency !== null && (
-                      <span className={`text-[10px] font-medium ${latencyColor(p.avgLatency)}`}>
-                        ⚡ {p.avgLatency}ms
+                      <span className={`flex items-center gap-0.5 text-[10px] font-medium ${latencyColor(p.avgLatency)}`}>
+                        <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        {p.avgLatency}ms
                       </span>
                     )}
                     {p.successRate !== null && (
-                      <span className={`text-[10px] font-medium ${p.successRate >= 95 ? "text-emerald-600" : p.successRate >= 80 ? "text-amber-600" : "text-rose-600"}`}>
-                        ✔ {p.successRate}%
+                      <span className={`flex items-center gap-0.5 text-[10px] font-medium ${p.successRate >= 95 ? "text-emerald-600" : p.successRate >= 80 ? "text-amber-600" : "text-rose-600"}`}>
+                        <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {p.successRate}%
                       </span>
                     )}
                     {p.requests24h > 0 && (
@@ -169,8 +175,11 @@ export default function ProviderStatus() {
                   </div>
                   {/* Last error */}
                   {p.lastError && (
-                    <p className="mt-1 truncate text-[10px] text-rose-400">
-                      ✕ {p.lastError.action}: {p.lastError.message}
+                    <p className="mt-1 flex items-center gap-0.5 truncate text-[10px] text-rose-400">
+                      <svg className="h-2.5 w-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                      </svg>
+                      {p.lastError.action}: {p.lastError.message}
                     </p>
                   )}
                 </div>

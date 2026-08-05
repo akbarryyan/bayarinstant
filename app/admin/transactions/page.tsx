@@ -314,7 +314,9 @@ export default function TransactionsPage() {
                     <p className="mt-2 text-2xl font-bold text-slate-800">{stats.total}</p>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                    💳
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.25 8.25h19.5M2.25 9.75h19.5M4.5 6h15A2.25 2.25 0 0121.75 8.25v8.25A2.25 2.25 0 0119.5 18.75h-15a2.25 2.25 0 01-2.25-2.25V8.25A2.25 2.25 0 014.5 6zM5.25 15h3" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -326,7 +328,9 @@ export default function TransactionsPage() {
                     <p className="mt-2 text-2xl font-bold text-emerald-600">{stats.success}</p>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                    ✅
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12.75l2.25 2.25 4.5-4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -338,7 +342,9 @@ export default function TransactionsPage() {
                     <p className="mt-2 text-2xl font-bold text-rose-600">{stats.failed}</p>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
-                    ❌
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -350,7 +356,9 @@ export default function TransactionsPage() {
                     <p className="mt-2 text-2xl font-bold text-amber-600">{stats.pending}</p>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
-                    ⏳
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -364,7 +372,9 @@ export default function TransactionsPage() {
                     </p>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 text-purple-600">
-                    💰
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m4-9.5c0-1.38-1.79-2.5-4-2.5s-4 1.12-4 2.5 1.79 2.5 4 2.5 4 1.12 4 2.5-1.79 2.5-4 2.5-4-1.12-4-2.5" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -692,7 +702,9 @@ export default function TransactionsPage() {
 
                 {filteredTransactions.length === 0 && (
                   <div className="py-12 text-center">
-                    <div className="text-6xl">💳</div>
+                    <svg className="mx-auto h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.25 8.25h19.5M2.25 9.75h19.5M4.5 6h15A2.25 2.25 0 0121.75 8.25v8.25A2.25 2.25 0 0119.5 18.75h-15a2.25 2.25 0 01-2.25-2.25V8.25A2.25 2.25 0 014.5 6zM5.25 15h3" />
+                    </svg>
                     <p className="mt-4 text-lg font-medium text-slate-600">
                       Tidak ada transaksi ditemukan
                     </p>

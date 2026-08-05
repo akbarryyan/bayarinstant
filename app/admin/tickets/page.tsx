@@ -66,7 +66,7 @@ export default function AdminTicketsPage() {
           {/* Title */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-slate-800">💬 Tiket Customer Service</h1>
+              <h1 className="text-lg font-bold text-slate-800">Tiket Customer Service</h1>
               <p className="text-xs text-slate-400 mt-0.5">Kelola pertanyaan dan keluhan dari pengguna.</p>
             </div>
           </div>

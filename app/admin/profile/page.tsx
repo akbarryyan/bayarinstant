@@ -163,7 +163,7 @@ export default function AdminProfilePage() {
           {/* Title */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">👤 Profil Admin</h1>
+              <h1 className="text-xl font-bold text-slate-800">Profil Admin</h1>
               <p className="text-sm text-slate-500 mt-0.5">
                 Kelola informasi akun dan keamanan.
               </p>
@@ -240,7 +240,7 @@ export default function AdminProfilePage() {
                 {/* Edit Profile */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="px-5 py-4 border-b border-slate-100">
-                    <h3 className="text-sm font-bold text-slate-700">✏️ Edit Profil</h3>
+                    <h3 className="text-sm font-bold text-slate-700">Edit Profil</h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">Perbarui nama dan nomor HP akun admin.</p>
                   </div>
                   <form onSubmit={saveProfile} className="px-5 py-4 space-y-4">
@@ -302,7 +302,7 @@ export default function AdminProfilePage() {
                 {/* Change Password */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="px-5 py-4 border-b border-slate-100">
-                    <h3 className="text-sm font-bold text-slate-700">🔒 Ganti Password</h3>
+                    <h3 className="text-sm font-bold text-slate-700">Ganti Password</h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">Password baru minimal 6 karakter.</p>
                   </div>
                   <form onSubmit={changePassword} className="px-5 py-4 space-y-4">
@@ -438,7 +438,7 @@ export default function AdminProfilePage() {
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                           Menyimpan...
                         </span>
-                      ) : "🔒 Ubah Password"}
+                      ) : "Ubah Password"}
                     </button>
                   </form>
                 </div>

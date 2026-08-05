@@ -347,7 +347,7 @@ export default function TestTransactionPage() {
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.name} ({u.email}) — Rp {u.balance.toLocaleString("id-ID")}
-                    {u.role === "ADMIN" ? " 👑" : ""}
+                    {u.role === "ADMIN" ? "" : ""}
                   </option>
                 ))}
               </select>
@@ -461,7 +461,7 @@ export default function TestTransactionPage() {
                         : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
                     }`}
                   >
-                    {m === "WALLET" ? "💳 Wallet" : "🏦 Payment Gateway"}
+                    {m === "WALLET" ? "Wallet" : "Payment Gateway"}
                   </button>
                 ))}
               </div>

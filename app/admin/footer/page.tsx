@@ -393,7 +393,7 @@ export default function AdminFooterPage() {
 
           {/* Page header */}
           <div>
-            <h1 className="text-xl font-bold text-slate-800">🦶 Pengaturan Footer</h1>
+            <h1 className="text-xl font-bold text-slate-800">Pengaturan Footer</h1>
             <p className="text-sm text-slate-500 mt-0.5">Atur konten footer yang tampil di halaman utama</p>
           </div>
 
@@ -654,7 +654,7 @@ export default function AdminFooterPage() {
                     className="w-full px-5 py-4 border-b border-slate-100 flex items-center justify-between hover:bg-slate-50 transition"
                   >
                     <div className="text-left">
-                      <h2 className="font-bold text-slate-700 text-sm">📝 Konten: {link.label}</h2>
+                      <h2 className="font-bold text-slate-700 text-sm">Konten: {link.label}</h2>
                       <p className="text-[11px] text-slate-400 mt-0.5">Atur isi halaman <span className="font-mono text-slate-500">{link.href}</span></p>
                     </div>
                     <svg

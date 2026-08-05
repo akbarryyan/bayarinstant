@@ -253,7 +253,7 @@ export default function AdminBrandsPage() {
                         )}
                         <button onClick={() => openConfig(brand)}
                           className="px-2.5 py-1.5 bg-purple-50 text-purple-700 text-[11px] font-semibold rounded-lg hover:bg-purple-100 transition-colors whitespace-nowrap">
-                          ⚙ Input Fields
+                          Input Fields
                         </button>
                         {!isEditing && brand.imageUrl && (
                           <button onClick={() => clearImage(brand.brand)} disabled={saving}

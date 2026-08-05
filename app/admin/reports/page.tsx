@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";
 
@@ -109,12 +109,115 @@ function BarChart({ data }: { data: DailyRevenue[] }) {
   );
 }
 
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+const iconProps = { fill: "none", stroke: "currentColor", strokeWidth: 2 } as const;
+
+function IconBanknote() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <rect x="2" y="6" width="20" height="12" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 9v0M18 15v0" />
+    </svg>
+  );
+}
+
+function IconCheckCircle() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 12.5l2.5 2.5 5-5" />
+    </svg>
+  );
+}
+
+function IconXCircle() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.5 9.5l5 5m0-5l-5 5" />
+    </svg>
+  );
+}
+
+function IconUsers() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20v-1.5a3.5 3.5 0 00-3.5-3.5h-3A3.5 3.5 0 007 18.5V20" />
+      <circle cx="12" cy="8" r="3.25" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 20v-1.5a3 3 0 00-2-2.83M15.5 5.1a3.25 3.25 0 010 6.3" />
+    </svg>
+  );
+}
+
+function IconTag() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.5 4H6a2 2 0 00-2 2v5.5a2 2 0 00.586 1.414l8.5 8.5a2 2 0 002.828 0l5.586-5.586a2 2 0 000-2.828l-8.5-8.5A2 2 0 0011.5 4z" />
+      <circle cx="8" cy="8" r="1.25" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTrendingUp() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l5.5-5.5 4 4L20 7M20 7h-5M20 7v5" />
+    </svg>
+  );
+}
+
+function IconWallet() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5A2.5 2.5 0 015.5 5H18a2 2 0 012 2v1" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5v9A2.5 2.5 0 005.5 19H19a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 000 4h13" />
+      <circle cx="16.5" cy="13" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconHourglass() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12M6 21h12M7 3c0 4 3.5 5.5 5 6.5 1.5-1 5-2.5 5-6.5M7 21c0-4 3.5-5.5 5-6.5 1.5 1 5 2.5 5 6.5" />
+    </svg>
+  );
+}
+
+function IconCreditCard() {
+  return (
+    <svg className="h-4 w-4" {...iconProps} viewBox="0 0 24 24">
+      <rect x="2.5" y="5" width="19" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 10h19" />
+    </svg>
+  );
+}
+
+function IconBank() {
+  return (
+    <svg className="h-4 w-4" {...iconProps} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M4 21V10m16 11V10M12 3L3 8h18L12 3zM7 10v6m5-6v6m5-6v6" />
+    </svg>
+  );
+}
+
+function IconMoneyCircle() {
+  return (
+    <svg className="h-6 w-6" {...iconProps} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v10M15 9.5c0-1.1-1.34-2-3-2s-3 .9-3 2 1.34 2 3 2 3 .9 3 2-1.34 2-3 2-3-.9-3-2" />
+    </svg>
+  );
+}
+
 // ── Stat card ──────────────────────────────────────────────────────────────────
 
 function StatCard({
   icon, label, value, sub, color,
 }: {
-  icon: string; label: string; value: string; sub?: string; color: string;
+  icon: ReactNode; label: string; value: string; sub?: string; color: string;
 }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -124,7 +227,7 @@ function StatCard({
           <p className={`mt-1.5 text-2xl font-bold ${color}`}>{value}</p>
           {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
         </div>
-        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-2xl ${color.replace("text-", "bg-").replace("-600", "-100").replace("-700", "-100")}`}>
+        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${color.replace("text-", "bg-").replace("-600", "-100").replace("-700", "-100")} ${color}`}>
           {icon}
         </div>
       </div>
@@ -269,20 +372,20 @@ export default function AdminReportsPage() {
             </div>
           ) : s && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard icon="💰" label="Total Pendapatan" value={formatRp(s.totalRevenue)} sub={formatRpFull(s.totalRevenue)} color="text-blue-700" />
-              <StatCard icon="✅" label="Transaksi Sukses" value={s.successOrders.toLocaleString()} sub={`${s.successRate}% success rate`} color="text-emerald-600" />
-              <StatCard icon="❌" label="Gagal / Expired" value={s.failedOrders.toLocaleString()} sub={`${s.totalOrders} total`} color="text-rose-600" />
-              <StatCard icon="👥" label="Member Baru" value={s.newMembers.toLocaleString()} sub="dalam periode ini" color="text-purple-600" />
+              <StatCard icon={<IconBanknote />} label="Total Pendapatan" value={formatRp(s.totalRevenue)} sub={formatRpFull(s.totalRevenue)} color="text-blue-700" />
+              <StatCard icon={<IconCheckCircle />} label="Transaksi Sukses" value={s.successOrders.toLocaleString()} sub={`${s.successRate}% success rate`} color="text-emerald-600" />
+              <StatCard icon={<IconXCircle />} label="Gagal / Expired" value={s.failedOrders.toLocaleString()} sub={`${s.totalOrders} total`} color="text-rose-600" />
+              <StatCard icon={<IconUsers />} label="Member Baru" value={s.newMembers.toLocaleString()} sub="dalam periode ini" color="text-purple-600" />
             </div>
           )}
 
           {/* ── Row 2: extra stats ── */}
           {s && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard icon="🏷️" label="Total Diskon" value={formatRp(s.totalDiscount)} sub={formatRpFull(s.totalDiscount)} color="text-amber-600" />
-              <StatCard icon="📈" label="Total Markup" value={formatRp(s.totalMarkup)} sub={formatRpFull(s.totalMarkup)} color="text-indigo-600" />
-              <StatCard icon="💸" label="Biaya Gateway" value={formatRp(s.totalFee)} sub={formatRpFull(s.totalFee)} color="text-slate-600" />
-              <StatCard icon="⏳" label="Transaksi Pending" value={s.pendingOrders.toLocaleString()} sub="belum selesai" color="text-amber-600" />
+              <StatCard icon={<IconTag />} label="Total Diskon" value={formatRp(s.totalDiscount)} sub={formatRpFull(s.totalDiscount)} color="text-amber-600" />
+              <StatCard icon={<IconTrendingUp />} label="Total Markup" value={formatRp(s.totalMarkup)} sub={formatRpFull(s.totalMarkup)} color="text-indigo-600" />
+              <StatCard icon={<IconWallet />} label="Biaya Gateway" value={formatRp(s.totalFee)} sub={formatRpFull(s.totalFee)} color="text-slate-600" />
+              <StatCard icon={<IconHourglass />} label="Transaksi Pending" value={s.pendingOrders.toLocaleString()} sub="belum selesai" color="text-amber-600" />
             </div>
           )}
 
@@ -328,7 +431,7 @@ export default function AdminReportsPage() {
                         <div key={pm.method}>
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm">{pm.method === "WALLET" ? "💳" : "🏦"}</span>
+                              <span className="text-slate-500">{pm.method === "WALLET" ? <IconCreditCard /> : <IconBank />}</span>
                               <span className="text-sm font-semibold text-slate-700">
                                 {pm.method === "WALLET" ? "Saldo Wallet" : "Payment Gateway"}
                               </span>
@@ -355,7 +458,7 @@ export default function AdminReportsPage() {
                 <p className="text-xs text-slate-400 mb-4">Total deposit member dalam periode</p>
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl">
-                    <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-2xl flex-shrink-0">💰</div>
+                    <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0"><IconMoneyCircle /></div>
                     <div>
                       <p className="text-xs text-slate-500">Total Top Up Masuk</p>
                       <p className="text-xl font-bold text-purple-700">{formatRpFull(data.topup.totalAmount)}</p>

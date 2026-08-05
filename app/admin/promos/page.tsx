@@ -204,7 +204,7 @@ export default function AdminPromosPage() {
           {/* Page header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">🎁 Manajemen Promo</h1>
+              <h1 className="text-xl font-bold text-slate-800">Manajemen Promo</h1>
               <p className="text-sm text-slate-500 mt-0.5">Kelola promo yang tampil di halaman Promo</p>
             </div>
             <button
