@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const allProducts = await prisma.product.findMany({
       orderBy: [
         { provider: "asc" },

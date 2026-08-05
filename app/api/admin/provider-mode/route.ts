@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import {
   ProviderFactory,
@@ -19,6 +20,9 @@ import { ProviderType, ProviderMode } from "@/src/core/domain/enums/provider.enu
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   // Ensure globalThis is synced from DB on every cold-start
   await initProviderModesFromDB();
 
@@ -48,6 +52,9 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  const deny = await requireAdmin();
+  if (deny) return deny;
+
   let body: unknown;
   try {
     body = await request.json();

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderManagementService } from "@/src/core/services/provider/provider-management.service";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
 
@@ -16,6 +17,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const body = await request.json();
     const { provider, operations = ["checkBalance", "healthCheck"] } = body;
 

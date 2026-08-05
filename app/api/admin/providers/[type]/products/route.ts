@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderManagementService } from "@/src/core/services/provider/provider-management.service";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
 
@@ -13,6 +14,9 @@ export async function GET(
   { params }: { params: Promise<{ type: string }> }
 ) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const { type } = await params;
     const providerType = type.toUpperCase() as ProviderType;
 

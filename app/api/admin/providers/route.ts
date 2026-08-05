@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderManagementService } from "@/src/core/services/provider/provider-management.service";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const service = new ProviderManagementService();
     const providersInfo = await service.getAllProvidersInfo();
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderRepository } from "@/src/infra/db/repositories/provider.repository";
 
 const providerRepo = new ProviderRepository();
@@ -9,6 +10,9 @@ const providerRepo = new ProviderRepository();
  */
 export async function GET() {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const settings = await providerRepo.getAllProviderSettings();
 
     // Convert Decimal to number for JSON serialization
@@ -47,6 +51,9 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
+    const deny = await requireAdmin();
+    if (deny) return deny;
+
     const body = await request.json();
 
     // Validate required fields
