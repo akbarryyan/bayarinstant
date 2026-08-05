@@ -292,7 +292,9 @@ export default function ProductsPage() {
                   <p className="mt-2 text-2xl font-bold text-slate-800">{products.length}</p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                  🛒
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
                 </div>
               </div>
             </div>
@@ -306,7 +308,9 @@ export default function ProductsPage() {
                   </p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                  ✅
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
               </div>
             </div>
@@ -320,7 +324,9 @@ export default function ProductsPage() {
                   </p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                  📦
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.25 7.5l-8.25 4.5L3.75 7.5M20.25 7.5v9l-8.25 4.5m8.25-13.5L12 3 3.75 7.5m0 0v9L12 21" />
+                  </svg>
                 </div>
               </div>
             </div>
@@ -334,7 +340,9 @@ export default function ProductsPage() {
                   </p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 text-purple-600">
-                  📋
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10M4 18h10" />
+                  </svg>
                 </div>
               </div>
             </div>
