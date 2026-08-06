@@ -25,8 +25,14 @@
 *.pem
 
 # user-uploaded images (persisted on the server, not tracked in git)
+# Subfolders themselves ARE tracked (via .gitkeep) so they always exist on disk
+# before the Next.js server boots — next start snapshots public/ subdirectories
+# at startup and won't discover a folder created later by mkdir() at upload time.
 /public/uploads/*
 !/public/uploads/.gitkeep
+!/public/uploads/*/
+/public/uploads/*/*
+!/public/uploads/*/.gitkeep
 
 # debug
 npm-debug.log*
