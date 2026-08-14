@@ -5,10 +5,11 @@
 
 import { NextResponse } from "next/server";
 import { getBannerImages, getSiteConfig, getSiteName } from "@/lib/site-config";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const [images, tagline, siteName] = await Promise.all([
     getBannerImages(),
     getSiteConfig("banner_tagline"),
@@ -21,3 +22,5 @@ export async function GET() {
       tagline || `${siteName} - Tempat Top Up Game dan Jual Beli Produk Digital Terpercaya`,
   });
 }
+
+export const GET = withRequestLog("/api/banners", GET_handler);

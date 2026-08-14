@@ -5,10 +5,13 @@
 
 import { NextResponse } from "next/server";
 import { getFlashSaleConfig } from "@/lib/site-config";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const config = await getFlashSaleConfig();
   return NextResponse.json({ success: true, data: config });
 }
+
+export const GET = withRequestLog("/api/flash-sale", GET_handler);

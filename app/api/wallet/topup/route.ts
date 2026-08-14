@@ -10,6 +10,10 @@ import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { getSession } from "@/lib/session";
 import { PoppayAdapter } from "@/src/infra/payment/poppay/poppay.adapter";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.wallet");
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +36,7 @@ function generateTopupCode(): string {
   return `WT-${date}-${rand}`;
 }
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   try {
     // ── Auth ───────────────────────────────────────────────────────────────
     const session = await getSession();
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
     } catch (err: unknown) {
       // Roll back the pending record
       await prisma.walletTopup.delete({ where: { id: topup.id } });
-      console.error("[Wallet Topup] Poppay createPayment failed:", err);
+      log.error({ err }, "poppay createPayment failed");
       return NextResponse.json(
         { success: false, error: "Gagal membuat invoice pembayaran. Coba lagi." },
         { status: 502 }
@@ -137,7 +141,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (err) {
-    console.error("[POST /api/wallet/topup]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog("/api/wallet/topup", POST_handler);

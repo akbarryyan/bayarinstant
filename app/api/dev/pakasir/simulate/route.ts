@@ -10,6 +10,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { PakasirAdapter } from "@/src/infra/payment/pakasir/pakasir.adapter";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.misc");
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +23,7 @@ const Schema = z.object({
   status: z.enum(["completed", "expired"]).default("completed"),
 });
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   if (process.env.APP_ENV === "production" || process.env.NODE_ENV === "production") {
     return NextResponse.json({ success: false, error: "Not available in production" }, { status: 403 });
   }
@@ -47,7 +51,9 @@ export async function POST(request: Request) {
       message: `Simulated ${parsed.data.status} for order ${parsed.data.order_id}`,
     });
   } catch (err: any) {
-    console.error("[POST /api/dev/pakasir/simulate]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog("/api/dev/pakasir/simulate", POST_handler);

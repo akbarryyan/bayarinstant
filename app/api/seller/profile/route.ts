@@ -4,6 +4,10 @@ import { prisma } from "@/src/infra/db/prisma";
 import { getSession } from "@/lib/session";
 import { slugifySellerName } from "@/lib/seller";
 import { imageRefSchema } from "@/lib/upload";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.seller");
 
 const SellerProfileSchema = z.object({
   displayName: z.string().min(3).max(120),
@@ -14,7 +18,7 @@ const SellerProfileSchema = z.object({
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -30,7 +34,7 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -79,7 +83,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Slug seller sudah dipakai" }, { status: 409 });
     }
 
-    console.error("[seller/profile POST]", error);
+    log.error({ err: error }, "seller/profile post");
     return NextResponse.json({ success: false, error: "Gagal menyimpan profil seller" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/seller/profile", GET_handler);
+export const POST = withRequestLog("/api/seller/profile", POST_handler);

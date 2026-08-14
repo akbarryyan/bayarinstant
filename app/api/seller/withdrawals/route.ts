@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireSellerSession } from "@/lib/seller";
 import { PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ function toPrismaJson(
   return value ? (value as Prisma.InputJsonValue) : Prisma.JsonNull;
 }
 
-export async function GET() {
+async function GET_handler() {
   const seller = await requireSellerSession();
   if ("error" in seller) {
     return NextResponse.json({ success: false, error: seller.error }, { status: seller.status });
@@ -91,7 +92,7 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   const seller = await requireSellerSession();
   if ("error" in seller) {
     return NextResponse.json({ success: false, error: seller.error }, { status: seller.status });
@@ -248,3 +249,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }
+
+export const GET = withRequestLog("/api/seller/withdrawals", GET_handler);
+export const POST = withRequestLog("/api/seller/withdrawals", POST_handler);

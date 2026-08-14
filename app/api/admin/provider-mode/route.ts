@@ -16,10 +16,11 @@ import {
   initProviderModesFromDB,
 } from "@/src/infra/providers/provider.factory";
 import { ProviderType, ProviderMode } from "@/src/core/domain/enums/provider.enum";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -51,7 +52,7 @@ const PatchSchema = z.object({
   mode: z.enum(["MOCK", "REAL"]).nullable(),
 });
 
-export async function PATCH(request: Request) {
+async function PATCH_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -85,3 +86,5 @@ export async function PATCH(request: Request) {
   });
 }
 
+export const GET = withRequestLog("/api/admin/provider-mode", GET_handler);
+export const PATCH = withRequestLog("/api/admin/provider-mode", PATCH_handler);

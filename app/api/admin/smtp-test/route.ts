@@ -6,10 +6,14 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { getSiteConfig, getSiteName } from "@/lib/site-config";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+async function POST_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -75,7 +79,7 @@ export async function POST() {
 
     return NextResponse.json({ success: true, to: user });
   } catch (error) {
-    console.error("[SMTP-TEST] Error:", error);
+    log.error({ err: error }, "error");
     const message =
       error instanceof Error ? error.message : "Gagal mengirim email test";
     return NextResponse.json(
@@ -84,3 +88,5 @@ export async function POST() {
     );
   }
 }
+
+export const POST = withRequestLog("/api/admin/smtp-test", POST_handler);

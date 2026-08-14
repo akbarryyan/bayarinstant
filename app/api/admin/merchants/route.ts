@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +16,7 @@ async function ensureAdmin() {
   return session;
 }
 
-export async function GET(request: NextRequest) {
+async function GET_handler(request: NextRequest) {
   try {
     const session = await ensureAdmin();
     if (!session) {
@@ -84,7 +88,9 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error("[GET /api/admin/merchants]", error);
+    log.error({ err: error }, "request failed");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/merchants", GET_handler);

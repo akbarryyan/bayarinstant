@@ -3,6 +3,10 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
 import { syncExpiredOrdersForUser } from "@/src/core/services/order/sync-expired-orders.service";
 import { autoReconcileOrderNow } from "@/src/core/services/provider/reconcile-scheduler.service";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.orders");
 
 // Status grup per tab
 const TAB_STATUSES: Record<string, string[]> = {
@@ -13,7 +17,7 @@ const TAB_STATUSES: Record<string, string[]> = {
   dibatalkan: ["FAILED", "EXPIRED", "REFUNDED"],
 };
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session.isLoggedIn || !session.userId) {
@@ -120,7 +124,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[TRANSAKSI API ERROR]", error);
+    log.error({ err: error }, "transaksi api failed");
     return NextResponse.json({ success: false, message: "Terjadi kesalahan" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/transaksi", GET_handler);

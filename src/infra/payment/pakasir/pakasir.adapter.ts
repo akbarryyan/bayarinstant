@@ -5,6 +5,9 @@ import {
   CreatePaymentResult,
   DetailPaymentResult,
 } from "@/src/core/ports/payment-gateway.port";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("payment.pakasir");
 
 /**
  * Pakasir Payment Gateway Adapter
@@ -40,7 +43,7 @@ export class PakasirAdapter implements IPaymentGatewayPort {
         : (process.env.PAKASIR_SANDBOX_API_KEY ?? process.env.PAKASIR_API_KEY ?? "");
 
     if (!slug || !apikey) {
-      console.warn(`[Pakasir:${mode}] PAKASIR_SLUG atau PAKASIR_API_KEY belum diset di .env`);
+      log.warn({ mode }, "pakasir not configured: PAKASIR_SLUG / PAKASIR_API_KEY missing");
     }
 
     this.client = new Pakasir({ slug, apikey });

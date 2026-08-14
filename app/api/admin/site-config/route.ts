@@ -17,10 +17,11 @@ import {
 } from "@/lib/site-config";
 import { initProviderModesFromDB } from "@/src/infra/providers/provider.factory";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -72,7 +73,7 @@ const PatchSchema = z.object({
   value: z.string(),  // allow empty — empty value will delete the key (revert to .env default)
 });
 
-export async function PATCH(request: Request) {
+async function PATCH_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -116,7 +117,7 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ success: true, data: { key: parsed.data.key, value: parsed.data.value, modes } });
 }
 
-export async function DELETE(request: Request) {
+async function DELETE_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -134,3 +135,7 @@ export async function DELETE(request: Request) {
   const modes = await getAllProviderModes();
   return NextResponse.json({ success: true, data: { key, modes } });
 }
+
+export const GET = withRequestLog("/api/admin/site-config", GET_handler);
+export const PATCH = withRequestLog("/api/admin/site-config", PATCH_handler);
+export const DELETE = withRequestLog("/api/admin/site-config", DELETE_handler);

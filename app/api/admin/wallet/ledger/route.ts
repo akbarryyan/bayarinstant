@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/wallet/ledger?userId=xxx&page=1&limit=20&type=HOLD
  * Histori ledger entries untuk user tertentu
  */
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { searchParams } = new URL(req.url);
@@ -87,10 +91,12 @@ export async function GET(req: NextRequest) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (err) {
-    console.error("[wallet/ledger GET]", err);
+    log.error({ err }, "wallet/ledger get");
     return NextResponse.json(
       { success: false, error: "Gagal mengambil ledger" },
       { status: 500 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/wallet/ledger", GET_handler);

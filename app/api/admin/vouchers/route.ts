@@ -6,10 +6,14 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
   try {
@@ -41,12 +45,12 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
-    console.error("[GET /api/admin/vouchers]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal memuat voucher." }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
   try {
@@ -91,7 +95,10 @@ export async function POST(request: Request) {
     if ((err as { code?: string }).code === "P2002") {
       return NextResponse.json({ success: false, error: "Kode voucher sudah dipakai." }, { status: 409 });
     }
-    console.error("[POST /api/admin/vouchers]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal membuat voucher." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/vouchers", GET_handler);
+export const POST = withRequestLog("/api/admin/vouchers", POST_handler);

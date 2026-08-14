@@ -7,6 +7,9 @@ import {
 import { calculatePaymentGatewayFee } from "@/lib/payment-gateway-fee";
 import { getPaymentGatewayFeeConfig, getSiteName } from "@/lib/site-config";
 import { PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("payment.poppay", { module: "adapter" });
 
 export class PoppayAdapter implements IPaymentGatewayPort {
   gatewayName = "POPPAY";
@@ -69,14 +72,38 @@ export class PoppayAdapter implements IPaymentGatewayPort {
     throw new Error("simulatePayment tidak didukung untuk Poppay.");
   }
 
+  /**
+   * URL callback dikirim per-transaksi ke Poppay, bukan didaftarkan di
+   * dashboard mereka. Kalau nilainya null, Poppay tidak punya alamat untuk
+   * memanggil balik dan pembayaran tidak akan pernah terkonfirmasi — dulu
+   * kegagalan ini sepenuhnya senyap.
+   *
+   * Catatan: `??` hanya jatuh ke fallback pada null/undefined, jadi variabel
+   * yang diset tapi kosong akan "menang" dan mematikan callback. Karena itu
+   * dipakai pencarian eksplisit yang juga menolak string kosong, dan sumber
+   * yang terpilih ikut dilog — kalau produksi diam-diam memakai nilai dev,
+   * baris log itu yang membongkarnya.
+   */
   private resolveCallbackUrl(): string | null {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      process.env.APP_URL ??
-      "";
+    const candidates = [
+      ["NEXT_PUBLIC_BASE_URL", process.env.NEXT_PUBLIC_BASE_URL],
+      ["NEXT_PUBLIC_APP_URL", process.env.NEXT_PUBLIC_APP_URL],
+      ["APP_URL", process.env.APP_URL],
+    ] as const;
 
-    if (!baseUrl) return null;
-    return `${baseUrl.replace(/\/+$/, "")}/api/webhook/poppay`;
+    const resolved = candidates.find(([, value]) => Boolean(value?.trim()));
+
+    if (!resolved) {
+      log.error(
+        { checkedEnv: candidates.map(([name]) => name) },
+        "poppay callback url unresolved — gateway will not call back"
+      );
+      return null;
+    }
+
+    const [source, value] = resolved;
+    const callbackUrl = `${value!.trim().replace(/\/+$/, "")}/api/webhook/poppay`;
+    log.info({ callbackUrl, source }, "poppay callback url resolved");
+    return callbackUrl;
   }
 }

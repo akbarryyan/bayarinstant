@@ -1,6 +1,9 @@
 import { OrderStatus } from "@/src/core/domain/enums/order.enum";
 import { OrderRepository } from "@/src/infra/db/repositories/order.repository";
 import { ReconcileOrderService } from "./reconcile-order.service";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("order.reconcile");
 
 const g = globalThis as unknown as {
   _orderReconcileTimers?: Map<string, ReturnType<typeof setTimeout>>;
@@ -45,7 +48,7 @@ export function scheduleOrderReconcile(
         });
       }
     } catch (error) {
-      console.error(`[ReconcileScheduler] Failed for order ${orderId}:`, error);
+      log.error({ err: error, orderId }, "scheduled reconcile failed");
       scheduleOrderReconcile(orderId, {
         delayMs: delayMs * 2,
         maxAttempts,
@@ -75,7 +78,7 @@ export async function autoReconcileOrderNow(orderId: string) {
       scheduleOrderReconcile(orderId);
     }
   } catch (error) {
-    console.error(`[AutoReconcileNow] Failed for order ${orderId}:`, error);
+    log.error({ err: error, orderId }, "auto reconcile failed");
     scheduleOrderReconcile(orderId);
   }
 

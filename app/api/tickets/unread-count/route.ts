@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 /**
  * GET /api/tickets/unread-count — returns unread ticket count for badge
  */
-export async function GET() {
+async function GET_handler() {
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
     return NextResponse.json({ count: 0 });
@@ -22,3 +23,5 @@ export async function GET() {
 
   return NextResponse.json({ count });
 }
+
+export const GET = withRequestLog("/api/tickets/unread-count", GET_handler);

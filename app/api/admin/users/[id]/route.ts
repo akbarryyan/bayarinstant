@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +16,7 @@ async function ensureAdmin() {
   return session;
 }
 
-export async function GET(
+async function GET_handler(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -77,7 +81,9 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[GET /api/admin/users/[id]]", error);
+    log.error({ err: error }, "]");
     return NextResponse.json({ success: false, error: "Gagal mengambil detail user" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/users/[id]", GET_handler);

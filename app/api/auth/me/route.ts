@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
 
-export async function GET() {
+const log = createLogger("api.auth");
+
+async function GET_handler() {
   try {
     const session = await getSession();
 
@@ -141,7 +145,9 @@ export async function GET() {
         : null,
     });
   } catch (error) {
-    console.error("[AUTH ME ERROR]", error);
+    log.error({ err: error }, "auth me failed");
     return NextResponse.json({ isLoggedIn: false, user: null });
   }
 }
+
+export const GET = withRequestLog("/api/auth/me", GET_handler);

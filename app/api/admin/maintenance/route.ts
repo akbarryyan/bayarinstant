@@ -3,10 +3,14 @@ import { getSession } from "@/lib/session";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getSiteConfig, setSiteConfig } from "@/lib/site-config";
 import { cookies } from "next/headers";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 const KEY = "MAINTENANCE_MODE";
 
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -14,12 +18,12 @@ export async function GET() {
     const val = await getSiteConfig(KEY);
     return NextResponse.json({ success: true, enabled: val === "1" });
   } catch (err) {
-    console.error("[GET /api/admin/maintenance]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, enabled: false }, { status: 500 });
   }
 }
 
-export async function PATCH() {
+async function PATCH_handler() {
   try {
     const session = await getSession();
     if (!session.isLoggedIn || session.role !== "ADMIN") {
@@ -50,7 +54,10 @@ export async function PATCH() {
 
     return NextResponse.json({ success: true, enabled: next === "1" });
   } catch (err) {
-    console.error("[PATCH /api/admin/maintenance]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/maintenance", GET_handler);
+export const PATCH = withRequestLog("/api/admin/maintenance", PATCH_handler);

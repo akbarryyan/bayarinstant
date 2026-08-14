@@ -7,6 +7,10 @@ import { NextResponse } from "next/server";
 import { getAllSiteConfig, getSiteName } from "@/lib/site-config";
 import { getFooterVisitorStats } from "@/lib/analytics";
 import { DEFAULT_FOOTER_COLUMNS } from "@/lib/footer-columns";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.misc");
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +51,7 @@ function buildFooterDefaults(siteName: string) {
   };
 }
 
-export async function GET() {
+async function GET_handler() {
   try {
     const [raw, visitorStats, siteName] = await Promise.all([
       getAllSiteConfig(),
@@ -70,7 +74,7 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.error("[GET /api/footer-config]", err);
+    log.error({ err }, "request failed");
     const defaults = buildFooterDefaults(await getSiteName().catch(() => "Website"));
     return NextResponse.json({
       success: true,
@@ -85,3 +89,5 @@ export async function GET() {
     });
   }
 }
+
+export const GET = withRequestLog("/api/footer-config", GET_handler);

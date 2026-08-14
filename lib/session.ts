@@ -1,5 +1,6 @@
 import { getIronSession, IronSession, SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { setRequestContext } from "@/src/infra/logging/request-context";
 
 export interface SessionData {
   userId?: string;
@@ -31,5 +32,12 @@ export const sessionOptions: SessionOptions = {
 export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
   const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+
+  // Satu baris ini memberi `userId` ke seluruh log request, untuk semua route
+  // yang membaca sesi — tanpa menyentuh 45 file pemanggilnya.
+  if (session.isLoggedIn && session.userId) {
+    setRequestContext({ userId: session.userId });
+  }
+
   return session;
 }

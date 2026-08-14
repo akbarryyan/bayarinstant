@@ -1,6 +1,9 @@
 import { prisma } from "@/src/infra/db/prisma";
 import { Prisma } from "@prisma/client";
 import { OrderStatus, InvoiceStatus } from "@/src/core/domain/enums/order.enum";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("db.repo");
 
 // ─── Input Types ────────────────────────────────────────────────────────────
 
@@ -236,7 +239,7 @@ export class OrderRepository {
       });
     } catch (err) {
       // Logging failure must not break the flow
-      console.error("[OrderRepository] Failed to log provider action:", err);
+      log.error({ err }, "failed to log provider action");
     }
   }
 

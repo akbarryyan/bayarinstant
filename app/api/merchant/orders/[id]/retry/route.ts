@@ -4,12 +4,13 @@ import { requireSellerSession } from "@/lib/seller";
 import { OrderRepository } from "@/src/infra/db/repositories/order.repository";
 import { ExecuteProviderPurchaseService } from "@/src/core/services/provider/execute-provider-purchase.service";
 import { OrderStatus } from "@/src/core/domain/enums/order.enum";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
 const executeService = new ExecuteProviderPurchaseService(new OrderRepository());
 
-export async function POST(
+async function POST_handler(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -71,3 +72,5 @@ export async function POST(
 
   return NextResponse.json({ success: true, data: refreshed });
 }
+
+export const POST = withRequestLog("/api/merchant/orders/[id]/retry", POST_handler);

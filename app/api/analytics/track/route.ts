@@ -2,6 +2,10 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { getJakartaDayKey } from "@/lib/analytics";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.misc");
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +19,7 @@ function shouldIgnorePath(pathname: string) {
   );
 }
 
-export async function POST(request: NextRequest) {
+async function POST_handler(request: NextRequest) {
   const today = getJakartaDayKey();
   const body = await request.json().catch(() => ({}));
   const pathname = typeof body?.pathname === "string" ? body.pathname : "/";
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
       `;
     });
   } catch (error) {
-    console.error("[POST /api/analytics/track]", error);
+    log.error({ err: error }, "request failed");
     return NextResponse.json({ success: false, error: "Failed to track analytics" }, { status: 500 });
   }
 
@@ -79,3 +83,5 @@ export async function POST(request: NextRequest) {
   });
   return response;
 }
+
+export const POST = withRequestLog("/api/analytics/track", POST_handler);

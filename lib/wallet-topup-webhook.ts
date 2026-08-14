@@ -8,6 +8,9 @@
 
 import { prisma } from "@/src/infra/db/prisma";
 import { IPaymentGatewayPort } from "@/src/core/ports/payment-gateway.port";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("wallet.topup");
 
 export interface TopupWebhookResult {
   action: "completed" | "already_completed" | "ignored" | "not_found";
@@ -22,7 +25,7 @@ export async function handleWalletTopupWebhook(
   const topupCode: string = String(payload.order_id ?? "");
   const status: string    = String(payload.status ?? "").toLowerCase();
 
-  console.log(`[WalletTopupWebhook] code=${topupCode} status=${status}`);
+  log.info({ topupCode, gatewayStatus: status }, "wallet topup callback received");
 
   // Only process "completed" status
   if (status !== "completed") {
@@ -42,13 +45,13 @@ export async function handleWalletTopupWebhook(
   });
 
   if (!topup) {
-    console.error(`[WalletTopupWebhook] WalletTopup not found: ${topupCode}`);
+    log.warn({ topupCode }, "wallet topup callback: topup not found");
     return { action: "not_found" };
   }
 
   // Already processed guard
   if (topup.status === "COMPLETED") {
-    console.log(`[WalletTopupWebhook] Already COMPLETED: ${topupCode}`);
+    log.info({ topupCode }, "wallet topup callback: already completed");
     return { action: "already_completed", topupId: topup.id };
   }
 
@@ -62,7 +65,7 @@ export async function handleWalletTopupWebhook(
   }
 
   if (detail.status !== "completed") {
-    console.warn(`[WalletTopupWebhook] detailPayment=${detail.status} for ${topupCode} - ignoring`);
+    log.warn({ topupCode, gatewayStatus: detail.status }, "wallet topup callback ignored: gateway cross-check not completed");
     return { action: "ignored" };
   }
 
@@ -111,7 +114,7 @@ export async function handleWalletTopupWebhook(
     });
   });
 
-  console.log(`[WalletTopupWebhook] User ${topup.userId} saldo +${topup.amount} (${topupCode})`);
+  log.info({ topupCode, userId: topup.userId, amount: topup.amount }, "wallet topup credited");
 
   return { action: "completed", topupId: topup.id };
 }

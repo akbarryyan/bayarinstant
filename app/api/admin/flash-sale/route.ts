@@ -12,10 +12,11 @@ import {
   type FlashSaleConfig,
 } from "@/lib/site-config";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -40,7 +41,7 @@ const PutSchema = z.object({
   products: z.array(ProductSchema),
 });
 
-export async function PUT(request: Request) {
+async function PUT_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -63,7 +64,7 @@ export async function PUT(request: Request) {
   return NextResponse.json({ success: true, data: parsed.data });
 }
 
-export async function DELETE() {
+async function DELETE_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -75,3 +76,7 @@ export async function DELETE() {
   await setFlashSaleConfig(defaultCfg);
   return NextResponse.json({ success: true, data: defaultCfg });
 }
+
+export const GET = withRequestLog("/api/admin/flash-sale", GET_handler);
+export const PUT = withRequestLog("/api/admin/flash-sale", PUT_handler);
+export const DELETE = withRequestLog("/api/admin/flash-sale", DELETE_handler);

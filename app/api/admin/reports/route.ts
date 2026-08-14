@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const session = await getSession();
   if (!session.isLoggedIn || session.role !== "ADMIN") {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -161,3 +162,5 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export const GET = withRequestLog("/api/admin/reports", GET_handler);

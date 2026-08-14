@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ function deltaStr(today: number, yesterday: number): { delta: string; tone: "goo
   return { delta: `${sign}${pct.toFixed(1)}%`, tone: pct >= 0 ? "good" : "bad" };
 }
 
-export async function GET() {
+async function GET_handler() {
   const session = await getSession();
   if (!session.isLoggedIn || session.role !== "ADMIN") {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -122,3 +123,5 @@ export async function GET() {
 
   return NextResponse.json({ success: true, data: { stats, revenue } });
 }
+
+export const GET = withRequestLog("/api/admin/dashboard", GET_handler);

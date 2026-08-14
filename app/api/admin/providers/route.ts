@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderManagementService } from "@/src/core/services/provider/provider-management.service";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/providers
  * Get all providers info (balance, health, mode)
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -35,7 +39,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("Failed to get providers info:", error);
+    log.error({ err: error }, "failed to get providers info");
     
     return NextResponse.json(
       {
@@ -47,3 +51,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/providers", GET_handler);

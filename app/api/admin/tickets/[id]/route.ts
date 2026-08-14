@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ interface Params { params: Promise<{ id: string }> }
  * POST  /api/admin/tickets/[id]  — admin reply to ticket
  * PATCH /api/admin/tickets/[id]  — update ticket status
  */
-export async function GET(_req: NextRequest, { params }: Params) {
+async function GET_handler(_req: NextRequest, { params }: Params) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -33,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   return NextResponse.json({ success: true, data: ticket });
 }
 
-export async function POST(req: NextRequest, { params }: Params) {
+async function POST_handler(req: NextRequest, { params }: Params) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   return NextResponse.json({ success: true, data: msg }, { status: 201 });
 }
 
-export async function PATCH(req: NextRequest, { params }: Params) {
+async function PATCH_handler(req: NextRequest, { params }: Params) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -82,3 +83,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   await prisma.ticket.update({ where: { id }, data: { status } });
   return NextResponse.json({ success: true });
 }
+
+export const GET = withRequestLog("/api/admin/tickets/[id]", GET_handler);
+export const POST = withRequestLog("/api/admin/tickets/[id]", POST_handler);
+export const PATCH = withRequestLog("/api/admin/tickets/[id]", PATCH_handler);

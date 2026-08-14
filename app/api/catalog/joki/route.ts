@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.catalog");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * Return all active joki products grouped by brand (game).
  * Public — no auth required.
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const products = await prisma.product.findMany({
       where: { type: "joki", isActive: true, stock: true },
@@ -69,10 +73,12 @@ export async function GET() {
       grouped,
     });
   } catch (error) {
-    console.error("[CATALOG JOKI ERROR]", error);
+    log.error({ err: error }, "catalog joki failed");
     return NextResponse.json(
       { success: false, error: "Gagal memuat produk joki." },
       { status: 500 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/catalog/joki", GET_handler);

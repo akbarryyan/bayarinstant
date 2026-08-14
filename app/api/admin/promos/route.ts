@@ -8,10 +8,14 @@ import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { imageRefSchema } from "@/lib/upload";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -21,7 +25,7 @@ export async function GET() {
     });
     return NextResponse.json({ success: true, data: promos });
   } catch (err) {
-    console.error("[GET /api/admin/promos]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal memuat promo." }, { status: 500 });
   }
 }
@@ -37,7 +41,7 @@ const CreateSchema = z.object({
   sortOrder:   z.number().int().optional().default(0),
 });
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -62,7 +66,10 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ success: true, data: promo }, { status: 201 });
   } catch (err) {
-    console.error("[POST /api/admin/promos]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal membuat promo." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/promos", GET_handler);
+export const POST = withRequestLog("/api/admin/promos", POST_handler);

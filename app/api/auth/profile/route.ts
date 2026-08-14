@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
 
-export async function PATCH(req: NextRequest) {
+const log = createLogger("api.auth");
+
+async function PATCH_handler(req: NextRequest) {
   try {
     const session = await getSession();
 
@@ -61,10 +65,12 @@ export async function PATCH(req: NextRequest) {
       user: updated,
     });
   } catch (error) {
-    console.error("[PROFILE UPDATE ERROR]", error);
+    log.error({ err: error }, "profile update failed");
     return NextResponse.json(
       { success: false, message: "Terjadi kesalahan server. Coba lagi." },
       { status: 500 }
     );
   }
 }
+
+export const PATCH = withRequestLog("/api/auth/profile", PATCH_handler);

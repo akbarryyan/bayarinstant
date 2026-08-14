@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { getSession } from "@/lib/session";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ async function requireAdmin() {
  * List all reviews (approved + pending) with optional filters.
  * Query: status=all|pending|approved, search, page
  */
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
  * Approve or reject (delete) a review.
  * Body: { id, action: "approve" | "reject" }
  */
-export async function PATCH(req: NextRequest) {
+async function PATCH_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -97,7 +98,7 @@ export async function PATCH(req: NextRequest) {
  * DELETE /api/admin/brand-reviews?id=xxx
  * Hard delete a review.
  */
-export async function DELETE(req: NextRequest) {
+async function DELETE_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -107,3 +108,7 @@ export async function DELETE(req: NextRequest) {
   await prisma.brandReview.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
+
+export const GET = withRequestLog("/api/admin/brand-reviews", GET_handler);
+export const PATCH = withRequestLog("/api/admin/brand-reviews", PATCH_handler);
+export const DELETE = withRequestLog("/api/admin/brand-reviews", DELETE_handler);

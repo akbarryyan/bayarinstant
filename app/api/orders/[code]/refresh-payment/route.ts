@@ -6,6 +6,10 @@ import { PoppayAdapter } from "@/src/infra/payment/poppay/poppay.adapter";
 import { isPoppayConfigured } from "@/src/infra/payment/poppay/poppay.client";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.orders");
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +24,7 @@ function buildReissuedOrderRef(orderCode: string): string {
   return `${orderCode}__R${Date.now()}`;
 }
 
-export async function POST(
+async function POST_handler(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
@@ -149,10 +153,12 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error("[POST /api/orders/[code]/refresh-payment]", error);
+    log.error({ err: error }, "/refresh-payment]");
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }
 }
+
+export const POST = withRequestLog("/api/orders/[code]/refresh-payment", POST_handler);

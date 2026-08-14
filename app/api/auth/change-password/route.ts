@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
 
-export async function POST(req: NextRequest) {
+const log = createLogger("api.auth");
+
+async function POST_handler(req: NextRequest) {
   try {
     const session = await getSession();
 
@@ -75,10 +79,12 @@ export async function POST(req: NextRequest) {
       message: "Password berhasil diubah.",
     });
   } catch (error) {
-    console.error("[CHANGE PASSWORD ERROR]", error);
+    log.error({ err: error }, "change password failed");
     return NextResponse.json(
       { success: false, message: "Terjadi kesalahan server. Coba lagi." },
       { status: 500 }
     );
   }
 }
+
+export const POST = withRequestLog("/api/auth/change-password", POST_handler);

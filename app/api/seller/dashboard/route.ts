@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireSellerSession } from "@/lib/seller";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const seller = await requireSellerSession();
   if ("error" in seller) {
     return NextResponse.json({ success: false, error: seller.error }, { status: seller.status });
@@ -90,3 +91,5 @@ export async function GET() {
     },
   });
 }
+
+export const GET = withRequestLog("/api/seller/dashboard", GET_handler);

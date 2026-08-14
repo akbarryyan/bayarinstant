@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.catalog");
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   try {
     const sellers = await prisma.sellerProfile.findMany({
       where: { isActive: true },
@@ -65,10 +69,12 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("[CATALOG SELLERS ERROR]", error);
+    log.error({ err: error }, "catalog sellers failed");
     return NextResponse.json(
       { success: false, error: "Gagal memuat merchant." },
       { status: 500 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/catalog/sellers", GET_handler);

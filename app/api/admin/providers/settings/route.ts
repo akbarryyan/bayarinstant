@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderRepository } from "@/src/infra/db/repositories/provider.repository";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 const providerRepo = new ProviderRepository();
 
@@ -8,7 +12,7 @@ const providerRepo = new ProviderRepository();
  * GET /api/admin/providers/settings
  * Get all provider settings (margin configuration)
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -27,7 +31,7 @@ export async function GET() {
       data: serializedSettings,
     });
   } catch (error: any) {
-    console.error("Get settings error:", error);
+    log.error({ err: error }, "get settings error");
     return NextResponse.json(
       { 
         success: false, 
@@ -49,7 +53,7 @@ export async function GET() {
  *   isActive: boolean
  * }
  */
-export async function PUT(request: NextRequest) {
+async function PUT_handler(request: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -108,7 +112,7 @@ export async function PUT(request: NextRequest) {
       data: serializedSetting,
     });
   } catch (error: any) {
-    console.error("Update settings error:", error);
+    log.error({ err: error }, "update settings error");
     return NextResponse.json(
       { 
         success: false, 
@@ -118,3 +122,6 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/providers/settings", GET_handler);
+export const PUT = withRequestLog("/api/admin/providers/settings", PUT_handler);

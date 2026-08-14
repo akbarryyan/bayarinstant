@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.catalog");
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +64,7 @@ function buildSingleTargetField(brand: string, categories: string[]): InputField
  * Return merchant-selected products for a specific brand slug (public, no auth).
  * Brand remains public even when no merchant has listed products yet.
  */
-export async function GET(
+async function GET_handler(
   _req: NextRequest,
   { params }: { params: Promise<{ brand: string }> }
 ) {
@@ -187,10 +191,12 @@ export async function GET(
       grouped: typeGroups,
     });
   } catch (error) {
-    console.error("[CATALOG BRAND PRODUCTS ERROR]", error);
+    log.error({ err: error }, "catalog brand products failed");
     return NextResponse.json(
       { success: false, error: "Gagal memuat produk." },
       { status: 500 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/catalog/brands/[brand]/products", GET_handler);

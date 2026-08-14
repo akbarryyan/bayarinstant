@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/products
  * Get all products with full details
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -51,7 +55,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Failed to get products:", error);
+    log.error({ err: error }, "failed to get products");
     return NextResponse.json(
       {
         success: false,
@@ -66,7 +70,7 @@ export async function GET() {
  * PUT /api/admin/products
  * Update product (margin, isActive)
  */
-export async function PUT(request: Request) {
+async function PUT_handler(request: Request) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -143,7 +147,7 @@ export async function PUT(request: Request) {
       message: "Product updated successfully",
     });
   } catch (error) {
-    console.error("Failed to update product:", error);
+    log.error({ err: error }, "failed to update product");
     return NextResponse.json(
       {
         success: false,
@@ -153,3 +157,6 @@ export async function PUT(request: Request) {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/products", GET_handler);
+export const PUT = withRequestLog("/api/admin/products", PUT_handler);

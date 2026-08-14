@@ -2,10 +2,14 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { isPoppayConfigured, PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
+async function POST_handler(request: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -55,7 +59,7 @@ export async function POST(request: NextRequest) {
       data,
     });
   } catch (error) {
-    console.error("[POPPAY CREATE INCOMING ERROR]", error);
+    log.error({ err: error }, "poppay create incoming failed");
     return NextResponse.json(
       {
         success: false,
@@ -65,3 +69,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog("/api/admin/payment-gateway/poppay/create", POST_handler);

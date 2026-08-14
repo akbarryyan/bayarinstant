@@ -34,6 +34,12 @@
 /public/uploads/*/*
 !/public/uploads/*/.gitkeep
 
+# server logs (persisted on the server, not tracked in git)
+# Direktori itu sendiri di-track lewat .gitkeep supaya sudah eksis dengan
+# permission yang benar sebelum server boot.
+/logs/*
+!/logs/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/providers/products
  * Get products from DATABASE only (no external API calls)
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -54,7 +58,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Failed to get products from database:", error);
+    log.error({ err: error }, "failed to get products from database");
     
     return NextResponse.json(
       {
@@ -66,3 +70,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/providers/products", GET_handler);

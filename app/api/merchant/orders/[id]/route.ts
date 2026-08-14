@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireSellerSession } from "@/lib/seller";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
+async function GET_handler(
   _request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
@@ -117,3 +118,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withRequestLog("/api/merchant/orders/[id]", GET_handler);

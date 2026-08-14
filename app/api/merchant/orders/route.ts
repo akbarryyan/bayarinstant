@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireSellerSession } from "@/lib/seller";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const merchant = await requireSellerSession();
   if ("error" in merchant) {
     return NextResponse.json({ success: false, error: merchant.error }, { status: merchant.status });
@@ -163,3 +164,5 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export const GET = withRequestLog("/api/merchant/orders", GET_handler);

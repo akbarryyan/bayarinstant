@@ -1,5 +1,8 @@
 import { prisma } from "@/src/infra/db/prisma";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("db.repo");
 
 export interface ProviderLogData {
   provider: string;
@@ -48,7 +51,7 @@ export class ProviderRepository {
         },
       });
     } catch (error) {
-      console.error("Failed to save provider log:", error);
+      log.error({ err: error }, "failed to save provider log");
       // Don't throw - logging failure shouldn't break the flow
       return null;
     }
@@ -122,7 +125,7 @@ export class ProviderRepository {
 
       return { succeeded, failed, total: products.length };
     } catch (error) {
-      console.error("Failed to sync products:", error);
+      log.error({ err: error }, "failed to sync products");
       throw error;
     }
   }

@@ -4,8 +4,12 @@ import { getSession } from "@/lib/session";
 import { getSiteName } from "@/lib/site-config";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
 
-export async function POST(req: NextRequest) {
+const log = createLogger("api.auth");
+
+async function POST_handler(req: NextRequest) {
   try {
     const siteName = await getSiteName();
     const body = await req.json();
@@ -291,10 +295,12 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[OTP VERIFY ERROR]", error);
+    log.error({ err: error }, "otp verify failed");
     return NextResponse.json(
       { success: false, message: "Terjadi kesalahan server. Coba lagi." },
       { status: 500 }
     );
   }
 }
+
+export const POST = withRequestLog("/api/auth/otp/verify", POST_handler);

@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/auth — check if current session is an admin
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const session = await getSession();
 
@@ -42,7 +43,7 @@ export async function GET() {
 /**
  * POST /api/admin/auth — admin login
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const { email, password } = await req.json();
 
@@ -117,3 +118,6 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/auth", GET_handler);
+export const POST = withRequestLog("/api/admin/auth", POST_handler);

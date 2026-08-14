@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/tickets — list all tickets for admin
  */
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
   const tickets = await prisma.ticket.findMany({
@@ -34,3 +35,5 @@ export async function GET() {
     })),
   });
 }
+
+export const GET = withRequestLog("/api/admin/tickets", GET_handler);

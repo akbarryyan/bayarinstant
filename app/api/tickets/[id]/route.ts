@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 interface Params { params: Promise<{ id: string }> }
 
@@ -9,7 +10,7 @@ interface Params { params: Promise<{ id: string }> }
  * POST /api/tickets/[id]          — add message to ticket (user reply)
  * PATCH /api/tickets/[id]         — close ticket
  */
-export async function GET(_req: NextRequest, { params }: Params) {
+async function GET_handler(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
@@ -30,7 +31,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   return NextResponse.json({ success: true, data: ticket });
 }
 
-export async function POST(req: NextRequest, { params }: Params) {
+async function POST_handler(req: NextRequest, { params }: Params) {
   const { id } = await params;
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   return NextResponse.json({ success: true, data: msg }, { status: 201 });
 }
 
-export async function PATCH(_req: NextRequest, { params }: Params) {
+async function PATCH_handler(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
@@ -92,3 +93,7 @@ export async function PATCH(_req: NextRequest, { params }: Params) {
 
   return NextResponse.json({ success: true });
 }
+
+export const GET = withRequestLog("/api/tickets/[id]", GET_handler);
+export const POST = withRequestLog("/api/tickets/[id]", POST_handler);
+export const PATCH = withRequestLog("/api/tickets/[id]", PATCH_handler);

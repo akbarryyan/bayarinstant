@@ -8,6 +8,10 @@ import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { imageRefSchema } from "@/lib/upload";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +26,7 @@ const UpdateSchema = z.object({
   sortOrder:   z.number().int().optional(),
 });
 
-export async function PUT(
+async function PUT_handler(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -52,12 +56,12 @@ export async function PUT(
     });
     return NextResponse.json({ success: true, data: promo });
   } catch (err) {
-    console.error("[PUT /api/admin/promos]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal memperbarui promo." }, { status: 500 });
   }
 }
 
-export async function DELETE(
+async function DELETE_handler(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -69,7 +73,10 @@ export async function DELETE(
     await prisma.promo.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("[DELETE /api/admin/promos]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal menghapus promo." }, { status: 500 });
   }
 }
+
+export const PUT = withRequestLog("/api/admin/promos/[id]", PUT_handler);
+export const DELETE = withRequestLog("/api/admin/promos/[id]", DELETE_handler);

@@ -9,6 +9,9 @@ import {
 import { ProviderType, ProviderStatus } from "@/src/core/domain/enums/provider.enum";
 import { ProviderError } from "@/src/core/domain/errors/provider.errors";
 import { getSiteConfigValue } from "@/lib/site-config";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("provider.vip");
 
 export class VipResellerAdapter implements IProviderPort {
   private apiKey = "";
@@ -45,11 +48,10 @@ export class VipResellerAdapter implements IProviderPort {
         sign: sign,
       };
 
-      console.log("[VIP] Check balance request:", {
-        url: `${this.baseUrl}/profile`,
-        hasApiKey: !!this.apiKey,
-        hasSign: !!sign,
-      });
+      log.debug(
+        { url: `${this.baseUrl}/profile`, hasApiKey: Boolean(this.apiKey), hasSign: Boolean(sign) },
+        "vip check balance request"
+      );
 
       const response = await fetch(`${this.baseUrl}/profile`, {
         method: "POST",
@@ -111,14 +113,14 @@ export class VipResellerAdapter implements IProviderPort {
         });
 
         if (!response.ok) {
-          console.warn(`[VIP] ${url} returned ${response.status}: ${response.statusText}`);
+          log.warn({ url, httpStatus: response.status, statusText: response.statusText }, "vip request non-ok response");
           return [];
         }
 
         const data = await response.json();
 
         if (data.result === false) {
-          console.warn(`[VIP] ${url} result=false: ${data.message}`);
+          log.warn({ url, providerMessage: data.message }, "vip request returned result=false");
           return [];
         }
 
@@ -137,7 +139,7 @@ export class VipResellerAdapter implements IProviderPort {
           description: item.description || null,
         }));
       } catch (err) {
-        console.warn(`[VIP] Failed to fetch ${url}:`, err);
+        log.warn({ err, url }, "vip fetch failed");
         return [];
       }
     };
@@ -157,8 +159,9 @@ export class VipResellerAdapter implements IProviderPort {
         return true;
       });
 
-      console.log(
-        `[VIP] getProducts: prepaid=${results[0].length}, game-feature=${results[1].length}, total=${unique.length}`
+      log.info(
+        { prepaid: results[0].length, gameFeature: results[1].length, total: unique.length },
+        "vip get products"
       );
 
       return unique;
@@ -372,12 +375,12 @@ export class VipResellerAdapter implements IProviderPort {
   private generateSignature(additionalData?: string): string {
     // If static sign is provided in env, use it (VIP often uses static sign)
     if (this.sign) {
-      console.log("[VIP] Using static sign from env");
+      log.info("using static sign from env");
       return this.sign;
     }
 
     // VIP Reseller signature: MD5(API_ID + API_KEY) or MD5(API_ID + API_KEY + additionalData)
-    console.log("[VIP] Generating dynamic signature");
+    log.info("generating dynamic signature");
     const crypto = require("crypto");
     const md5 = crypto.createHash("md5");
     const signString = additionalData 
@@ -385,7 +388,7 @@ export class VipResellerAdapter implements IProviderPort {
       : this.apiId + this.apiKey;
     md5.update(signString);
     const signature = md5.digest("hex");
-    console.log("[VIP] Generated signature (first 10 chars):", signature.substring(0, 10));
+    log.debug({ signaturePreview: signature.slice(0, 10) }, "vip signature generated");
     return signature;
   }
 }

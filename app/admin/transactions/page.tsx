@@ -1,5 +1,10 @@
 "use client";
 
+// Catatan: console.* di client component SENGAJA dipertahankan.
+// src/infra/logging/logger.ts adalah server-only — mengimpornya dari sini
+// akan menggagalkan build. Kalau error client perlu masuk log server,
+// kirimkan lewat route handler, jangan impor logger ke browser.
+
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";

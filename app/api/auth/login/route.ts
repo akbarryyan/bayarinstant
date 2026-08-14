@@ -3,8 +3,12 @@ import bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
 
-export async function POST(req: NextRequest) {
+const log = createLogger("api.auth");
+
+async function POST_handler(req: NextRequest) {
   try {
     const body = await req.json();
     const { identifier, password, method } = body;
@@ -137,10 +141,12 @@ export async function POST(req: NextRequest) {
       userId: user.id,
     });
   } catch (error) {
-    console.error("[AUTH LOGIN ERROR]", error);
+    log.error({ err: error }, "auth login failed");
     return NextResponse.json(
       { success: false, message: "Terjadi kesalahan server. Coba lagi." },
       { status: 500 }
     );
   }
 }
+
+export const POST = withRequestLog("/api/auth/login", POST_handler);
