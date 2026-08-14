@@ -27,6 +27,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { OrderRepository } from "@/src/infra/db/repositories/order.repository";
 import { OrderStatus } from "@/src/core/domain/enums/order.enum";
 import { checkAndUpgradeUserTier } from "@/lib/pricing";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("webhook.vip");
 
 export const dynamic = "force-dynamic";
 
@@ -37,17 +41,17 @@ function ok() {
   return NextResponse.json({ success: true }, { status: 200 });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   // ── 1. Parse body ─────────────────────────────────────────────────────────
   let payload: any;
   try {
     payload = await req.json();
   } catch {
-    console.error("[Webhook/VIP] Failed to parse JSON body");
+    log.error("failed to parse JSON body");
     return ok(); // kembalikan 200 agar VIP tidak retry
   }
 
-  console.log("[Webhook/VIP] Received:", JSON.stringify(payload));
+  log.info({ payload }, "vip callback received");
 
   // ── 2. Validasi signature ─────────────────────────────────────────────────
   const signature = req.headers.get("x-client-signature") ?? "";
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest) {
   const expectedSig = createHash("md5").update(apiId + apiKey).digest("hex");
 
   if (signature && expectedSig && signature !== expectedSig) {
-    console.warn("[Webhook/VIP] Invalid signature. Received:", signature);
+    log.warn({ signature }, "invalid signature. Received");
     return NextResponse.json({ success: false, error: "Invalid signature" }, { status: 401 });
   }
 
@@ -64,13 +68,13 @@ export async function POST(req: NextRequest) {
   const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
   const clientIp = forwardedFor.split(",")[0].trim();
   if (clientIp && clientIp !== VIP_WEBHOOK_IP) {
-    console.warn(`[Webhook/VIP] Request from unexpected IP: ${clientIp}`);
+    log.warn({ clientIp }, "vip callback from unexpected ip");
     // Log only — jangan reject karena bisa jadi ada proxy/CDN
   }
 
   // ── 4. Normalise payload — Prepaid: data adalah array, Game: data adalah object ──
   if (!payload.data) {
-    console.warn("[Webhook/VIP] Missing data field in payload");
+    log.warn("missing data field in payload");
     return ok();
   }
 
@@ -79,20 +83,20 @@ export async function POST(req: NextRequest) {
   const { trxid, status: vipStatus, note } = item;
 
   if (!trxid) {
-    console.warn("[Webhook/VIP] Missing trxid in webhook payload");
+    log.warn("missing trxid in webhook payload");
     return ok();
   }
 
   // ── 5. Map status VIP → status internal ───────────────────────────────────
   // waiting / processing → masih berjalan, abaikan (tunggu webhook success/error)
   if (vipStatus === "waiting" || vipStatus === "processing") {
-    console.log(`[Webhook/VIP] trxid=${trxid} status=${vipStatus} — ignoring interim status`);
+    log.info({ trxid, vipStatus }, "vip callback ignored: interim status");
     return ok();
   }
 
   const isFinal = vipStatus === "success" || vipStatus === "error";
   if (!isFinal) {
-    console.warn(`[Webhook/VIP] Unknown status: ${vipStatus}. Ignoring.`);
+    log.warn({ trxid, vipStatus }, "vip callback ignored: unknown status");
     return ok();
   }
 
@@ -101,21 +105,21 @@ export async function POST(req: NextRequest) {
   const order = await orderRepo.findByProviderRef(trxid);
 
   if (!order) {
-    console.warn(`[Webhook/VIP] No order found with providerRef=${trxid}`);
+    log.warn({ providerRef: trxid }, "vip callback: no matching order");
     return ok();
   }
 
   if (order.status === OrderStatus.SUCCESS) {
     await orderRepo.creditSellerCommission(order.id).catch((error) => {
-      console.error(`[Webhook/VIP] Failed to backfill seller commission for order ${order.id}:`, error);
+      log.error({ err: error, orderId: order.id }, "vip callback: seller commission backfill failed");
     });
-    console.log(`[Webhook/VIP] Order ${order.id} already SUCCESS. Commission backfill checked.`);
+    log.info({ orderId: order.id }, "vip callback: order already success");
     return ok();
   }
 
   // Jika order sudah terminal gagal, skip
   if (order.status === OrderStatus.FAILED) {
-    console.log(`[Webhook/VIP] Order ${order.id} already FAILED. Skipping.`);
+    log.info({ orderId: order.id }, "vip callback: order already failed");
     return ok();
   }
 
@@ -141,7 +145,7 @@ export async function POST(req: NextRequest) {
       await checkAndUpgradeUserTier(order.userId).catch(() => {});
     }
 
-    console.log(`[Webhook/VIP] Order ${order.id} → SUCCESS. SN: ${serialNumber ?? "-"}`);
+    log.info({ orderId: order.id, serialNumber: serialNumber ?? null }, "vip callback: order success");
   } else {
     // vipStatus === "error"
     await orderRepo.updateStatus(order.id, OrderStatus.FAILED, {
@@ -153,8 +157,10 @@ export async function POST(req: NextRequest) {
       await orderRepo.releaseWalletHold(order.userId, Number(order.amount), order.id);
     }
 
-    console.log(`[Webhook/VIP] Order ${order.id} → FAILED. Note: ${note}`);
+    log.warn({ orderId: order.id, note }, "vip callback: order failed");
   }
 
   return ok();
 }
+
+export const POST = withRequestLog("/api/webhook/vip", POST_handler);

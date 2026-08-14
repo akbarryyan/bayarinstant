@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireSellerSession } from "@/lib/seller";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ const SellerProductSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const seller = await requireSellerSession();
   if ("error" in seller) {
     return NextResponse.json({ success: false, error: seller.error }, { status: seller.status });
@@ -114,7 +115,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   const seller = await requireSellerSession();
   if ("error" in seller) {
     return NextResponse.json({ success: false, error: seller.error }, { status: seller.status });
@@ -171,7 +172,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, data: sellerProduct });
 }
 
-export async function DELETE(req: NextRequest) {
+async function DELETE_handler(req: NextRequest) {
   const seller = await requireSellerSession();
   if ("error" in seller) {
     return NextResponse.json({ success: false, error: seller.error }, { status: seller.status });
@@ -197,3 +198,7 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+export const GET = withRequestLog("/api/seller/products", GET_handler);
+export const POST = withRequestLog("/api/seller/products", POST_handler);
+export const DELETE = withRequestLog("/api/seller/products", DELETE_handler);

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/transactions/[id]
  * Get single transaction detail with provider logs
  */
-export async function GET(
+async function GET_handler(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
@@ -120,7 +124,7 @@ export async function GET(
       data: orderData,
     });
   } catch (error) {
-    console.error("Failed to get transaction detail:", error);
+    log.error({ err: error }, "failed to get transaction detail");
     return NextResponse.json(
       {
         success: false,
@@ -130,3 +134,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/transactions/[id]", GET_handler);

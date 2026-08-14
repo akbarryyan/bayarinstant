@@ -5,10 +5,14 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.vouchers");
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   try {
     const session = await getSession();
     const userId = session.isLoggedIn ? session.userId : null;
@@ -54,7 +58,9 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
-    console.error("[GET /api/vouchers]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal memuat voucher." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/vouchers", GET_handler);

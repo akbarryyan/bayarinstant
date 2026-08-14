@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderManagementService } from "@/src/core/services/provider/provider-management.service";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +19,7 @@ export const dynamic = "force-dynamic";
  *   "operations": ["checkBalance", "getProducts", "healthCheck"]
  * }
  */
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -109,7 +113,7 @@ export async function POST(request: Request) {
       results,
     });
   } catch (error) {
-    console.error("Failed to test provider:", error);
+    log.error({ err: error }, "failed to test provider");
     
     return NextResponse.json(
       {
@@ -121,3 +125,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRequestLog("/api/admin/providers/test", POST_handler);

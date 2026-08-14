@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPoppayConfigured, PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+async function GET_handler(request: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest) {
       data,
     });
   } catch (error) {
-    console.error("[POPPAY BANK LIST ERROR]", error);
+    log.error({ err: error }, "poppay bank list failed");
     return NextResponse.json(
       {
         success: false,
@@ -51,3 +55,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/payment-gateway/poppay/banks", GET_handler);

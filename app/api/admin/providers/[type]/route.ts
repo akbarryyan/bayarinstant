@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { ProviderManagementService } from "@/src/core/services/provider/provider-management.service";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +13,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/providers/[type]
  * Get specific provider info
  */
-export async function GET(
+async function GET_handler(
   request: Request,
   { params }: { params: Promise<{ type: string }> }
 ) {
@@ -54,7 +58,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error(`Failed to get provider info:`, error);
+    log.error({ err: error }, "failed to get provider info");
     
     return NextResponse.json(
       {
@@ -66,3 +70,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/providers/[type]", GET_handler);

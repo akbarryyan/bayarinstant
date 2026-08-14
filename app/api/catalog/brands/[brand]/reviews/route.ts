@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { getSession } from "@/lib/session";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.catalog");
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +15,7 @@ const PAGE_SIZE = 10;
  * Returns approved reviews + aggregate stats for a brand (public, no auth).
  * Query params: page (default 1)
  */
-export async function GET(
+async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ brand: string }> }
 ) {
@@ -80,7 +84,7 @@ export async function GET(
       userReview,
     });
   } catch (error) {
-    console.error("[BRAND REVIEWS GET ERROR]", error);
+    log.error({ err: error }, "brand reviews get failed");
     return NextResponse.json({ success: false, error: "Gagal memuat ulasan." }, { status: 500 });
   }
 }
@@ -90,7 +94,7 @@ export async function GET(
  * Submit a review for a brand. Requires login.
  * Body: { rating: number (1-5), comment: string }
  */
-export async function POST(
+async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ brand: string }> }
 ) {
@@ -169,7 +173,10 @@ export async function POST(
       message: "Ulasan berhasil dikirim dan menunggu persetujuan admin.",
     });
   } catch (error) {
-    console.error("[BRAND REVIEWS POST ERROR]", error);
+    log.error({ err: error }, "brand reviews post failed");
     return NextResponse.json({ success: false, error: "Gagal mengirim ulasan." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/catalog/brands/[brand]/reviews", GET_handler);
+export const POST = withRequestLog("/api/catalog/brands/[brand]/reviews", POST_handler);

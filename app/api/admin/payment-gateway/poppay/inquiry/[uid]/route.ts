@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { isPoppayConfigured, PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
+async function GET_handler(
   _request: Request,
   { params }: { params: Promise<{ uid: string }> }
 ) {
@@ -35,7 +39,7 @@ export async function GET(
           : undefined,
     });
   } catch (error) {
-    console.error("[POPPAY INQUIRY ERROR]", error);
+    log.error({ err: error }, "poppay inquiry failed");
     return NextResponse.json(
       {
         success: false,
@@ -45,3 +49,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/payment-gateway/poppay/inquiry/[uid]", GET_handler);

@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
 
-export async function POST(req: NextRequest) {
+const log = createLogger("api.auth");
+
+async function POST_handler(req: NextRequest) {
   try {
     const body = await req.json();
     const { identifier, method, code, newPassword, confirmPassword } = body;
@@ -169,10 +173,12 @@ export async function POST(req: NextRequest) {
       message: "Password berhasil direset! Silakan login dengan password baru.",
     });
   } catch (error) {
-    console.error("[RESET PASSWORD ERROR]", error);
+    log.error({ err: error }, "reset password failed");
     return NextResponse.json(
       { success: false, message: "Terjadi kesalahan server. Coba lagi." },
       { status: 500 }
     );
   }
 }
+
+export const POST = withRequestLog("/api/auth/reset-password", POST_handler);

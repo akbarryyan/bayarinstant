@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
  * Returns per-provider stats (balance, latency, success rate) + 24h totals.
  * Used by the ProviderStatus dashboard widget.
  */
-export async function GET() {
+async function GET_handler() {
   const session = await getSession();
   if (!session.isLoggedIn || session.role !== "ADMIN") {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -89,3 +90,5 @@ export async function GET() {
     },
   });
 }
+
+export const GET = withRequestLog("/api/admin/providers/summary", GET_handler);

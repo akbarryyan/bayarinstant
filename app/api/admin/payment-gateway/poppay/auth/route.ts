@@ -4,10 +4,14 @@ import {
   PoppayClient,
 } from "@/src/infra/payment/poppay/poppay.client";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -50,7 +54,7 @@ export async function GET() {
       data: auth,
     });
   } catch (error) {
-    console.error("[POPPAY AUTH DEBUG ERROR]", error);
+    log.error({ err: error }, "poppay auth debug failed");
     return NextResponse.json(
       {
         success: false,
@@ -61,3 +65,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/payment-gateway/poppay/auth", GET_handler);

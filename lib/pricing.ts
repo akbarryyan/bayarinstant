@@ -17,6 +17,9 @@
  */
 
 import { prisma } from "@/src/infra/db/prisma";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("pricing");
 
 export interface TierPricing {
   tierId: string;
@@ -134,13 +137,13 @@ export async function checkAndUpgradeUserTier(userId: string): Promise<void> {
         where: { id: userId },
         data: { tierId: qualifiedTier.id },
       });
-      console.log(
-        `[UserTier] User ${userId} auto-upgraded to "${qualifiedTier.label}" ` +
-        `(${successCount} success orders >= ${qualifiedTier.minOrders} threshold)`
+      log.info(
+        { userId, tier: qualifiedTier.label, successCount, minOrders: qualifiedTier.minOrders },
+        "user tier auto-upgraded"
       );
     }
   } catch (err) {
     // Non-fatal: log but don't fail the order
-    console.error("[UserTier] checkAndUpgradeUserTier error:", err);
+    log.error({ err }, "checkAndUpgradeUserTier error");
   }
 }

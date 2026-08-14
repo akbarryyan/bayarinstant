@@ -20,6 +20,10 @@ import {
   NotFoundError,
 } from "@/src/core/domain/errors/domain.errors";
 import { isLoginRequiredForPurchase } from "@/lib/auth-config";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.checkout");
 
 export const dynamic = "force-dynamic";
 
@@ -98,11 +102,11 @@ async function markVoucherUsed(voucherId: string, userId: string | null, orderId
     });
   } catch (err) {
     // Don't fail the order if voucher tracking fails
-    console.error("[checkout] markVoucherUsed error:", err);
+    log.error({ err }, "markVoucherUsed error");
   }
 }
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   try {
     // ── 1. Parse body ──────────────────────────────────────────────────────
     let body: unknown;
@@ -191,7 +195,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: err.message }, { status: 422 });
     }
 
-    console.error("[POST /api/checkout]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog("/api/checkout", POST_handler);

@@ -6,12 +6,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
 // ── GET ──────────────────────────────────────────────────────────────────────
 
-export async function GET() {
+async function GET_handler() {
   try {
     const session = await getSession();
 
@@ -38,14 +42,14 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: user });
   } catch (err) {
-    console.error("[GET /api/admin/profile]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
 
 // ── PATCH ─────────────────────────────────────────────────────────────────────
 
-export async function PATCH(req: NextRequest) {
+async function PATCH_handler(req: NextRequest) {
   try {
     const session = await getSession();
 
@@ -119,7 +123,10 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (err) {
-    console.error("[PATCH /api/admin/profile]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/profile", GET_handler);
+export const PATCH = withRequestLog("/api/admin/profile", PATCH_handler);

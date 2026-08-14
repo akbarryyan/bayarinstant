@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +13,7 @@ export const dynamic = "force-dynamic";
  * Get all transactions/orders with filters, stats, and optional pagination.
  * Add ?page=N&pageSize=M to enable server-side pagination.
  */
-export async function GET(request: Request) {
+async function GET_handler(request: Request) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -124,10 +128,12 @@ export async function GET(request: Request) {
       ...(usePagination ? { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } : {}),
     });
   } catch (error) {
-    console.error("Failed to get transactions:", error);
+    log.error({ err: error }, "failed to get transactions");
     return NextResponse.json(
       { success: false, error: "Failed to fetch transactions" },
       { status: 500 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/transactions", GET_handler);

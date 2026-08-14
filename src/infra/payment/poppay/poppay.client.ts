@@ -1,4 +1,8 @@
 import { getSiteConfig } from "@/lib/site-config";
+import { createLogger } from "@/src/infra/logging/logger";
+import { maskAccountNumber } from "@/src/infra/logging/redaction";
+
+const log = createLogger("payment.poppay", { module: "client" });
 
 interface PoppayBankListFilter {
   key: string;
@@ -302,6 +306,8 @@ export class PoppayClient {
   private async requireConfig(): Promise<PoppayRuntimeConfig> {
     const cfg = await getPoppayRuntimeConfig();
     if (!cfg.baseUrl || !cfg.versionPath || !cfg.integratorToken || !cfg.email || !cfg.password) {
+      // Summary ini sudah dirancang bebas rahasia (hanya boolean + preview).
+      log.error(await getPoppayDebugConfigSummary(), "poppay not configured");
       throw new Error(
         "Poppay belum terkonfigurasi. Isi URL/API base, version, integrator token, login email, dan login password."
       );
@@ -315,6 +321,7 @@ export class PoppayClient {
 
   private async login(config: PoppayRuntimeConfig): Promise<string> {
     const endpoint = `${config.baseUrl}/${config.versionPath}/auth/login`;
+    const startedAt = performance.now();
     const res = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -338,10 +345,17 @@ export class PoppayClient {
       throw new Error(`Respons login Poppay tidak valid (HTTP ${res.status}).`);
     }
 
+    const durationMs = Math.round(performance.now() - startedAt);
     const accessToken = json?.data?.access_token?.trim();
     if (!res.ok || !json?.success || !accessToken) {
+      log.error(
+        { endpoint, httpStatus: res.status, durationMs, gatewayMessage: json?.message },
+        "poppay login failed"
+      );
       throw new Error(json?.message || `Login Poppay gagal (HTTP ${res.status}).`);
     }
+
+    log.info({ endpoint, httpStatus: res.status, durationMs }, "poppay login ok");
 
     tokenCache._poppayAccessToken = accessToken;
     tokenCache._poppayAccessTokenAt = Date.now();
@@ -397,6 +411,7 @@ export class PoppayClient {
       tokenCache._poppayAccessTokenFor = this.getCacheKey(config);
     }
     if (res.status === 401) {
+      log.warn({ endpoint }, "poppay 401 — retrying with fresh token");
       res = await makeRequest(true);
       const retriedToken = res.headers.get("Nrt")?.trim();
       if (retriedToken) {
@@ -436,6 +451,7 @@ export class PoppayClient {
       tokenCache._poppayAccessTokenFor = this.getCacheKey(config);
     }
     if (res.status === 401) {
+      log.warn({ endpoint }, "poppay 401 — retrying with fresh token");
       res = await makeRequest();
       const retriedToken = res.headers.get("Nrt")?.trim();
       if (retriedToken) {
@@ -522,6 +538,22 @@ export class PoppayClient {
       expiration_interval: input.expirationInterval ?? 30,
     };
 
+    // Baris terpenting di seluruh jalur pembayaran: mencatat persis apa yang
+    // kita kirim ke gateway, termasuk callback_url. Tanpa ini, callback yang
+    // tidak pernah datang mustahil didiagnosis dari sisi kita.
+    log.info(
+      {
+        endpoint,
+        aggRefId: input.aggRefId,
+        amount: input.amount,
+        callbackUrl: input.callbackUrl ?? null,
+        expirationInterval: payload.expiration_interval,
+        hasPayorEmail: Boolean(input.payorEmail),
+      },
+      "poppay create incoming request"
+    );
+
+    const startedAt = performance.now();
     const res = await this.oneShotAuthorizedFetch(config, endpoint, {
       method: "POST",
       headers: {
@@ -529,17 +561,48 @@ export class PoppayClient {
       },
       body: JSON.stringify(payload),
     });
+    const durationMs = Math.round(performance.now() - startedAt);
 
     let json: PoppayCreateIncomingResponse | null = null;
     try {
       json = (await res.json()) as PoppayCreateIncomingResponse;
     } catch {
+      log.error(
+        { endpoint, aggRefId: input.aggRefId, httpStatus: res.status, durationMs },
+        "poppay create incoming: invalid json response"
+      );
       throw new Error(`Respons create incoming Poppay tidak valid (HTTP ${res.status}).`);
     }
 
     if (!res.ok || !json?.success || !json.data) {
+      log.error(
+        {
+          endpoint,
+          aggRefId: input.aggRefId,
+          httpStatus: res.status,
+          durationMs,
+          gatewayCode: json?.code,
+          gatewayMessage: json?.message,
+        },
+        "poppay create incoming failed"
+      );
       throw new Error(json?.message || `Gagal membuat QRIS Poppay (HTTP ${res.status}).`);
     }
+
+    log.info(
+      {
+        aggRefId: json.data.agg_ref_id,
+        refId: json.data.ref_id,
+        extRefId: json.data.ext_ref_id,
+        expiredAt: json.data.expired_at,
+        // raw_qr adalah instrumen pembayaran — panjangnya saja sudah cukup
+        // untuk memastikan QR benar-benar terbentuk.
+        rawQrLength: json.data.raw_qr?.length ?? 0,
+        httpStatus: res.status,
+        durationMs,
+      },
+      "poppay create incoming ok"
+    );
 
     const checkoutUrl = /^https?:\/\//i.test(json.data.checkout_url)
       ? json.data.checkout_url
@@ -579,6 +642,20 @@ export class PoppayClient {
       callback_url: input.callbackUrl ?? null,
     };
 
+    // Ini uang KELUAR — jejaknya wajib ada. Nomor rekening tujuan di-mask.
+    log.info(
+      {
+        endpoint,
+        aggRefId: input.aggRefId,
+        amount: input.amount,
+        bankCode: payload.bank_code,
+        dstAccNum: maskAccountNumber(payload.dst_acc_num),
+        callbackUrl: input.callbackUrl ?? null,
+      },
+      "poppay create outgoing request"
+    );
+
+    const startedAt = performance.now();
     const res = await this.oneShotAuthorizedFetch(config, endpoint, {
       method: "POST",
       headers: {
@@ -586,17 +663,43 @@ export class PoppayClient {
       },
       body: JSON.stringify(payload),
     });
+    const durationMs = Math.round(performance.now() - startedAt);
 
     let json: PoppayCreateOutgoingResponse | null = null;
     try {
       json = (await res.json()) as PoppayCreateOutgoingResponse;
     } catch {
+      log.error(
+        { endpoint, aggRefId: input.aggRefId, httpStatus: res.status, durationMs },
+        "poppay create outgoing: invalid json response"
+      );
       throw new Error(`Respons create outgoing Poppay tidak valid (HTTP ${res.status}).`);
     }
 
     if (!res.ok || !json?.success || !json.data) {
+      log.error(
+        {
+          endpoint,
+          aggRefId: input.aggRefId,
+          httpStatus: res.status,
+          durationMs,
+          gatewayCode: json?.code,
+          gatewayMessage: json?.message,
+        },
+        "poppay create outgoing failed"
+      );
       throw new Error(json?.message || `Gagal membuat payout Poppay (HTTP ${res.status}).`);
     }
+
+    log.info(
+      {
+        aggRefId: json.data.agg_ref_id,
+        refId: json.data.ref_id,
+        httpStatus: res.status,
+        durationMs,
+      },
+      "poppay create outgoing ok"
+    );
 
     return {
       refId: json.data.ref_id,
@@ -615,21 +718,37 @@ export class PoppayClient {
     }
 
     const endpoint = `${config.baseUrl}/${config.versionPath}/transaction/in/inquiry/${encodeURIComponent(safeUid)}`;
+    const startedAt = performance.now();
     const res = await this.authorizedFetch(config, endpoint, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     });
+    const durationMs = Math.round(performance.now() - startedAt);
 
     let json: PoppayIncomingInquiryResponse | null = null;
     try {
       json = (await res.json()) as PoppayIncomingInquiryResponse;
     } catch {
+      log.error(
+        { uid: safeUid, httpStatus: res.status, durationMs },
+        "poppay inquiry: invalid json response"
+      );
       throw new Error(`Respons inquiry Poppay tidak valid (HTTP ${res.status}).`);
     }
 
     if (!res.ok || !json?.success) {
+      log.error(
+        {
+          uid: safeUid,
+          httpStatus: res.status,
+          durationMs,
+          gatewayCode: json?.code,
+          gatewayMessage: json?.message,
+        },
+        "poppay inquiry failed"
+      );
       throw new Error(json?.message || `Gagal inquiry transaksi Poppay (HTTP ${res.status}).`);
     }
 
@@ -649,9 +768,18 @@ export class PoppayClient {
         ? Number(raw.payment_status)
         : null;
 
+    const mappedStatus = mapPoppayStatusCode(rawStatusCode);
+
+    // mappedStatus ikut dilog supaya kalau Poppay menambah kode status baru,
+    // "unknown" langsung terlihat — bukan diam-diam jadi "pending".
+    log.info(
+      { uid: safeUid, httpStatus: res.status, durationMs, rawStatusCode, mappedStatus },
+      "poppay inquiry ok"
+    );
+
     return {
       uid: safeUid,
-      status: mapPoppayStatusCode(rawStatusCode),
+      status: mappedStatus,
       statusCode: rawStatusCode ?? undefined,
       raw,
     };

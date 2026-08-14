@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/users
  * Daftar user ringkas untuk keperluan admin (test transaksi, dll.)
  */
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
   try {
@@ -46,7 +50,9 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("[GET /api/admin/users]", error);
+    log.error({ err: error }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal mengambil data user" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/users", GET_handler);

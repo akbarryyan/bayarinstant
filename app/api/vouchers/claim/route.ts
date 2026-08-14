@@ -5,10 +5,14 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.vouchers");
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   try {
     const session = await getSession();
     if (!session.isLoggedIn || !session.userId) {
@@ -82,7 +86,9 @@ export async function POST(request: Request) {
     if ((err as { code?: string }).code === "P2002") {
       return NextResponse.json({ success: false, error: "Kamu sudah mengklaim voucher ini." }, { status: 400 });
     }
-    console.error("[POST /api/vouchers/claim]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal mengklaim voucher." }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog("/api/vouchers/claim", POST_handler);

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +13,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/wallet
  * Daftar semua user beserta info wallet (balance, total ledger entries)
  */
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { searchParams } = new URL(req.url);
@@ -67,7 +71,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (err) {
-    console.error("[wallet GET]", err);
+    log.error({ err }, "wallet get");
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data wallet" },
       { status: 500 }
@@ -85,7 +89,7 @@ export async function GET(req: NextRequest) {
  * DEBIT   → potong saldo langsung (tanpa hold step)
  * REFUND  → kembalikan saldo setelah debit
  */
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
   let body: {
@@ -172,10 +176,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (err: any) {
-    console.error("[wallet POST]", err);
+    log.error({ err }, "wallet post");
     return NextResponse.json(
       { success: false, error: err.message ?? "Gagal memproses operasi wallet" },
       { status: 400 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/admin/wallet", GET_handler);
+export const POST = withRequestLog("/api/admin/wallet", POST_handler);

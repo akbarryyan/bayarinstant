@@ -6,10 +6,11 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
   const [tiers, nullTierCount] = await Promise.all([
@@ -39,7 +40,7 @@ const CreateSchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
   let body: unknown;
@@ -79,3 +80,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ success: true, data: tier }, { status: 201 });
 }
+
+export const GET = withRequestLog("/api/admin/tiers", GET_handler);
+export const POST = withRequestLog("/api/admin/tiers", POST_handler);

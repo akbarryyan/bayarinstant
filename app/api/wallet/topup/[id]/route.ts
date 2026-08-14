@@ -7,10 +7,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { getSession } from "@/lib/session";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.wallet");
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
+async function GET_handler(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -56,7 +60,9 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error("[GET /api/wallet/topup/:id]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/wallet/topup/[id]", GET_handler);

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ const Schema = z.object({
   tierId: z.string().nullable(), // null = revert to default tier
 });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function PATCH_handler(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { id } = await params;
@@ -44,3 +45,5 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   return NextResponse.json({ success: true, data: { id: updated.id, tierId: updated.tierId, tier: updated.tier } });
 }
+
+export const PATCH = withRequestLog("/api/admin/users/[id]/tier", PATCH_handler);

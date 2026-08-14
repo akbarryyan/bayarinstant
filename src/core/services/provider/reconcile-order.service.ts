@@ -4,6 +4,9 @@ import { ProviderFactory } from "@/src/infra/providers/provider.factory";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
 import { OrderStatus } from "@/src/core/domain/enums/order.enum";
 import { checkAndUpgradeUserTier } from "@/lib/pricing";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("order.reconcile");
 
 /**
  * ReconcileOrderService
@@ -91,7 +94,7 @@ export class ReconcileOrderService {
       checkResult = await provider.checkStatus(order.providerRef);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      console.error(`[Reconcile] checkStatus failed for order ${orderId}:`, message);
+      log.error({ orderId, providerMessage: message }, "reconcile: checkStatus failed");
       return { status: "error", message: `checkStatus error: ${message}. Coba lagi nanti.` };
     }
 
@@ -120,7 +123,7 @@ export class ReconcileOrderService {
         await checkAndUpgradeUserTier(order.userId);
       }
 
-      console.log(`[Reconcile] Order ${orderId} → SUCCESS. SN: ${checkResult.serialNumber}`);
+      log.info({ orderId, serialNumber: checkResult.serialNumber }, "reconcile: order success");
       return { status: "success", message: "Order reconciled to SUCCESS" };
 
     } else if (checkResult.status === "failed") {
@@ -129,12 +132,12 @@ export class ReconcileOrderService {
         `Reconcile: provider FAILED — ${checkResult.message}`
       );
 
-      console.log(`[Reconcile] Order ${orderId} → FAILED.`);
+      log.warn({ orderId }, "reconcile: order failed");
       return failure;
 
     } else {
       // Masih pending — admin bisa coba reconcile lagi nanti
-      console.log(`[Reconcile] Order ${orderId} still PENDING.`);
+      log.info({ orderId }, "reconcile: order still pending");
       return { status: "pending", message: "Masih pending — coba reconcile lagi nanti" };
     }
   }
@@ -151,7 +154,7 @@ export class ReconcileOrderService {
         await this.reconcile(order.id);
         processed++;
       } catch (err) {
-        console.error(`[Reconcile] Failed for order ${order.id}:`, err);
+        log.error({ err, orderId: order.id }, "reconcile failed");
         errors++;
       }
     }

@@ -15,12 +15,16 @@ import { OrderRepository } from "@/src/infra/db/repositories/order.repository";
 import { getSession } from "@/lib/session";
 import { syncExpiredOrderByCode } from "@/src/core/services/order/sync-expired-orders.service";
 import { autoReconcileOrderNow } from "@/src/core/services/provider/reconcile-scheduler.service";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.orders");
 
 export const dynamic = "force-dynamic";
 
 const orderRepo = new OrderRepository();
 
-export async function GET(
+async function GET_handler(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
@@ -99,7 +103,9 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error("[GET /api/orders/[code]]", err);
+    log.error({ err }, "]");
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/orders/[code]", GET_handler);

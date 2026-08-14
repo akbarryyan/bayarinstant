@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +21,7 @@ async function ensureAdmin() {
   return session;
 }
 
-export async function PATCH(
+async function PATCH_handler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -57,7 +61,9 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: merchant });
   } catch (error) {
-    console.error("[PATCH /api/admin/merchants/[id]]", error);
+    log.error({ err: error }, "]");
     return NextResponse.json({ success: false, error: "Gagal memperbarui merchant" }, { status: 500 });
   }
 }
+
+export const PATCH = withRequestLog("/api/admin/merchants/[id]", PATCH_handler);

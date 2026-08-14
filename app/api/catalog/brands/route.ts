@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.catalog");
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +20,7 @@ const TYPE_GROUP_MAP: Record<string, string[]> = {
  * Return all public brands, enriched with merchant availability.
  * Optional ?typeGroup= to filter by product type group.
  */
-export async function GET(request: NextRequest) {
+async function GET_handler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const typeGroup = searchParams.get("typeGroup") ?? undefined;
@@ -89,10 +93,12 @@ export async function GET(request: NextRequest) {
       data,
     });
   } catch (error) {
-    console.error("[CATALOG BRANDS ERROR]", error);
+    log.error({ err: error }, "catalog brands failed");
     return NextResponse.json(
       { success: false, error: "Gagal memuat data brand." },
       { status: 500 }
     );
   }
 }
+
+export const GET = withRequestLog("/api/catalog/brands", GET_handler);

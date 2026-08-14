@@ -8,12 +8,16 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { saveUploadedImage, UploadError, UPLOAD_FOLDERS, type UploadFolder } from "@/lib/upload";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.misc");
 
 export const dynamic = "force-dynamic";
 
 const ADMIN_ONLY_FOLDERS = new Set<UploadFolder>(["promos", "brands", "banners", "payment-methods", "site", "footer"]);
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -42,7 +46,9 @@ export async function POST(request: Request) {
     if (error instanceof UploadError) {
       return NextResponse.json({ success: false, error: error.message }, { status: error.status });
     }
-    console.error("[POST /api/upload]", error);
+    log.error({ err: error }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal mengunggah gambar." }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog("/api/upload", POST_handler);

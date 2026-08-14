@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +22,7 @@ async function ensureAdmin() {
   return session;
 }
 
-export async function POST(request: NextRequest) {
+async function POST_handler(request: NextRequest) {
   try {
     const session = await ensureAdmin();
     if (!session) {
@@ -158,7 +162,9 @@ export async function POST(request: NextRequest) {
       message: "Produk aktif berhasil disalin ke merchant target",
     });
   } catch (error) {
-    console.error("[POST /api/admin/merchants/copy-products]", error);
+    log.error({ err: error }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal menyalin produk merchant" }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog("/api/admin/merchants/copy-products", POST_handler);

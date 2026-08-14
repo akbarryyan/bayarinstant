@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 /**
  * GET  /api/tickets         — list user's tickets
  * POST /api/tickets         — create new ticket (with first message)
  */
-export async function GET() {
+async function GET_handler() {
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -42,7 +43,7 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   const session = await getSession();
   if (!session.isLoggedIn || !session.userId) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -70,3 +71,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true, data: ticket }, { status: 201 });
 }
+
+export const GET = withRequestLog("/api/tickets", GET_handler);
+export const POST = withRequestLog("/api/tickets", POST_handler);

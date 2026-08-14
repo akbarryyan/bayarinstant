@@ -5,10 +5,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { getSession } from "@/lib/session";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.vouchers");
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+async function GET_handler(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code")?.trim().toUpperCase();
   const amount = Number(searchParams.get("amount") ?? 0);
@@ -89,7 +93,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (err) {
-    console.error("[vouchers/validate] error", err);
+    log.error({ err }, "error");
     return NextResponse.json({ success: false, error: "Terjadi kesalahan server" }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/vouchers/validate", GET_handler);

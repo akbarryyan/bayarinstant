@@ -13,6 +13,10 @@ import {
 } from "@/src/core/domain/errors/domain.errors";
 import { getPriceForUser } from "@/lib/pricing";
 import { getMerchantPlatformFeeConfig } from "@/lib/site-config";
+import { createLogger } from "@/src/infra/logging/logger";
+import { setRequestContext } from "@/src/infra/logging/request-context";
+
+const log = createLogger("checkout");
 
 export interface CheckoutInput {
   productId: string;
@@ -213,8 +217,7 @@ export class CreateCheckoutService {
         await this.executeService.execute(order.id);
       } catch (execErr: unknown) {
         // Execute gagal tapi order sudah PAID — admin bisa reconcile
-        const message = execErr instanceof Error ? execErr.message : "Unknown error";
-        console.error(`[Checkout] Wallet order ${order.id} execute gagal:`, message);
+        log.error({ err: execErr, orderId: order.id }, "wallet order execute failed");
       }
 
       // Re-fetch order untuk return status terbaru
@@ -260,6 +263,30 @@ export class CreateCheckoutService {
           amount: totalWithFee,
         },
       });
+
+      // Sejak titik ini, SELURUH log sisa request otomatis membawa orderId,
+      // provider, dan paymentMethod — memenuhi Konstitusi pasal 9.1 tanpa
+      // menyentuh signature fungsi mana pun.
+      setRequestContext({
+        orderId: order.id,
+        provider: this.paymentGateway.gatewayName,
+        paymentMethod: input.paymentMethod,
+      });
+
+      // Pasangan dari log "poppay create incoming request": apa yang kita
+      // janjikan ke gateway, dan invoice mana yang menunggu callback-nya.
+      log.info(
+        {
+          orderCode,
+          invoiceId: pgResult.invoiceId,
+          amount: pgResult.amount,
+          fee: pgResult.fee,
+          totalPayment: pgResult.totalPayment,
+          method: pgResult.method,
+          expiredAt: pgResult.expiredAt,
+        },
+        "payment invoice created"
+      );
 
       // Create payment invoice
       await this.orderRepo.createInvoice({

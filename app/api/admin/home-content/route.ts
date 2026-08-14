@@ -7,10 +7,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getHomeContent, setHomeContent, deleteSiteConfig } from "@/lib/site-config";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -34,7 +35,7 @@ const PutSchema = z.object({
   aboutText: z.string().default(""),
 });
 
-export async function PUT(request: Request) {
+async function PUT_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -57,7 +58,7 @@ export async function PUT(request: Request) {
   return NextResponse.json({ success: true, data: parsed.data });
 }
 
-export async function DELETE() {
+async function DELETE_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -65,3 +66,7 @@ export async function DELETE() {
   const data = await getHomeContent(); // returns defaults
   return NextResponse.json({ success: true, data });
 }
+
+export const GET = withRequestLog("/api/admin/home-content", GET_handler);
+export const PUT = withRequestLog("/api/admin/home-content", PUT_handler);
+export const DELETE = withRequestLog("/api/admin/home-content", DELETE_handler);

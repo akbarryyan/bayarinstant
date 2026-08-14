@@ -19,6 +19,7 @@ import { PoppayAdapter } from "@/src/infra/payment/poppay/poppay.adapter";
 import { ProviderType } from "@/src/core/domain/enums/provider.enum";
 import { OrderStatus } from "@/src/core/domain/enums/order.enum";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ type Step = {
   detail?: unknown;
 };
 
-export async function POST(request: Request) {
+async function POST_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
   let body: unknown;
@@ -303,3 +304,5 @@ export async function POST(request: Request) {
     },
   });
 }
+
+export const POST = withRequestLog("/api/admin/test-transaction", POST_handler);

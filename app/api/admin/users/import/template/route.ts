@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { getSession } from "@/lib/session";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ async function ensureAdmin() {
   return session;
 }
 
-export async function GET() {
+async function GET_handler() {
   const session = await ensureAdmin();
   if (!session) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
@@ -62,3 +63,5 @@ export async function GET() {
     },
   });
 }
+
+export const GET = withRequestLog("/api/admin/users/import/template", GET_handler);

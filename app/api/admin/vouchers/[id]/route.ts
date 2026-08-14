@@ -6,10 +6,14 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(
+async function PATCH_handler(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -51,12 +55,12 @@ export async function PATCH(
     if ((err as { code?: string }).code === "P2002") {
       return NextResponse.json({ success: false, error: "Kode voucher sudah dipakai." }, { status: 409 });
     }
-    console.error("[PATCH /api/admin/vouchers]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal mengupdate voucher." }, { status: 500 });
   }
 }
 
-export async function DELETE(
+async function DELETE_handler(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -70,7 +74,10 @@ export async function DELETE(
     if ((err as { code?: string }).code === "P2025") {
       return NextResponse.json({ success: false, error: "Voucher tidak ditemukan." }, { status: 404 });
     }
-    console.error("[DELETE /api/admin/vouchers]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal menghapus voucher." }, { status: 500 });
   }
 }
+
+export const PATCH = withRequestLog("/api/admin/vouchers/[id]", PATCH_handler);
+export const DELETE = withRequestLog("/api/admin/vouchers/[id]", DELETE_handler);

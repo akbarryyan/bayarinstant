@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * PATCH /api/admin/payment-methods/[id]
  * Update label, group, imageUrl, isActive, sortOrder
  */
-export async function PATCH(
+async function PATCH_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -32,7 +36,7 @@ export async function PATCH(
     const method = await prisma.paymentMethod.update({ where: { id }, data });
     return NextResponse.json({ success: true, data: method });
   } catch (error) {
-    console.error("[ADMIN PAYMENT METHODS PATCH ERROR]", error);
+    log.error({ err: error }, "admin payment methods patch failed");
     return NextResponse.json({ success: false, error: "Gagal memperbarui." }, { status: 500 });
   }
 }
@@ -41,7 +45,7 @@ export async function PATCH(
  * DELETE /api/admin/payment-methods/[id]
  * Delete a payment method permanently.
  */
-export async function DELETE(
+async function DELETE_handler(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -52,7 +56,10 @@ export async function DELETE(
     await prisma.paymentMethod.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[ADMIN PAYMENT METHODS DELETE ERROR]", error);
+    log.error({ err: error }, "admin payment methods delete failed");
     return NextResponse.json({ success: false, error: "Gagal menghapus." }, { status: 500 });
   }
 }
+
+export const PATCH = withRequestLog("/api/admin/payment-methods/[id]", PATCH_handler);
+export const DELETE = withRequestLog("/api/admin/payment-methods/[id]", DELETE_handler);

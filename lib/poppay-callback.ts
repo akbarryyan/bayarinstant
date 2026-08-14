@@ -3,6 +3,10 @@ import { OrderRepository } from "@/src/infra/db/repositories/order.repository";
 import { ExecuteProviderPurchaseService } from "@/src/core/services/provider/execute-provider-purchase.service";
 import { InvoiceStatus, OrderStatus, WebhookSource } from "@/src/core/domain/enums/order.enum";
 import { PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
+import { createLogger } from "@/src/infra/logging/logger";
+import { setRequestContext } from "@/src/infra/logging/request-context";
+
+const log = createLogger("webhook.poppay", { module: "callback" });
 
 export interface PoppayCallbackPayload {
   refid: string;
@@ -39,13 +43,24 @@ export interface PoppayCallbackResult {
   executeError?: string;
 }
 
+/**
+ * Gerbang cross-check sebelum menandai lunas. Perhatikan: semua error di sini
+ * diturunkan jadi `false`, artinya gangguan jaringan sesaat pun membuat
+ * callback pembayaran asli ditolak. Karena itu hasilnya SELALU dilog — dulu
+ * hanya cabang exception yang tercatat.
+ */
 async function confirmCompletedViaInquiry(refId: string): Promise<boolean> {
   try {
     const client = new PoppayClient();
     const inquiry = await client.inquireIncoming(refId);
-    return inquiry.status === "completed";
+    const confirmed = inquiry.status === "completed";
+    log.info(
+      { refId, inquiryStatus: inquiry.status, statusCode: inquiry.statusCode, confirmed },
+      "poppay callback inquiry cross-check"
+    );
+    return confirmed;
   } catch (error) {
-    console.error("[Poppay Callback] Inquiry verification failed:", error);
+    log.error({ err: error, refId }, "poppay callback inquiry verification failed");
     return false;
   }
 }
@@ -98,6 +113,35 @@ function resolveOrderCodeFromAggRefId(aggRefId: string): string {
   return orderCode || String(aggRefId);
 }
 
+/** Satu baris penutup siklus: apa yang akhirnya dilakukan callback ini. */
+function logHandled(
+  eventId: string,
+  payload: PoppayCallbackPayload,
+  result: Omit<PoppayCallbackResult, "duplicate">
+): void {
+  const level =
+    result.action === "not_found" ||
+    result.action === "inquiry_mismatch" ||
+    result.action === "execute_failed"
+      ? "warn"
+      : "info";
+
+  log[level](
+    {
+      eventId,
+      aggRefId: payload.agg_refid,
+      refId: payload.refid,
+      gatewayStatus: payload.status,
+      action: result.action,
+      orderId: result.orderId,
+      topupId: result.topupId,
+      withdrawalId: result.withdrawalId,
+      executeError: result.executeError,
+    },
+    "poppay callback handled"
+  );
+}
+
 export async function handlePoppayCallback(
   payload: PoppayCallbackPayload,
   rawPayload: unknown
@@ -111,7 +155,15 @@ export async function handlePoppayCallback(
     payload: rawPayload as Parameters<OrderRepository["findOrCreateWebhookEvent"]>[0]["payload"],
   });
 
+  setRequestContext({ provider: "POPPAY", paymentMethod: "PAYMENT_GATEWAY" });
+
   if (duplicate) {
+    // Retry dari Poppay dengan refid+status yang sama. Dulu sepenuhnya senyap,
+    // padahal inilah yang membuat callback gagal tidak pernah bisa sembuh.
+    log.info(
+      { eventId, aggRefId: payload.agg_refid, gatewayStatus: payload.status },
+      "poppay callback duplicate — ignored"
+    );
     return { duplicate: true, action: "ignored" };
   }
 
@@ -121,22 +173,29 @@ export async function handlePoppayCallback(
     if (String(payload.agg_refid).startsWith("WT-")) {
       const result = await handlePoppayTopup(payload, paidAt);
       await orderRepo.markWebhookProcessed(eventId);
+      logHandled(eventId, payload, result);
       return { duplicate: false, ...result };
     }
 
     if (String(payload.agg_refid).startsWith("withdraw-")) {
       const result = await handlePoppayWithdrawal(payload);
       await orderRepo.markWebhookProcessed(eventId);
+      logHandled(eventId, payload, result);
       return { duplicate: false, ...result };
     }
 
     const result = await handlePoppayOrder(payload, paidAt);
     await orderRepo.markWebhookProcessed(eventId);
+    logHandled(eventId, payload, result);
     return { duplicate: false, ...result };
   } catch (error) {
     await orderRepo.markWebhookProcessed(
       eventId,
       error instanceof Error ? error.message : "Unknown callback error"
+    );
+    log.error(
+      { err: error, eventId, aggRefId: payload.agg_refid, gatewayStatus: payload.status },
+      "poppay callback processing failed"
     );
     throw error;
   }

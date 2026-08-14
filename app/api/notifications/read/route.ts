@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 /**
  * PATCH /api/notifications/read — mark notifications as read
  * Body: { ids: string[] } or { all: true }
  */
-export async function PATCH(req: NextRequest) {
+async function PATCH_handler(req: NextRequest) {
   const session = await getSession();
   const body = await req.json();
 
@@ -35,3 +36,5 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+export const PATCH = withRequestLog("/api/notifications/read", PATCH_handler);

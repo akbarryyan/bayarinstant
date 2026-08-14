@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +16,7 @@ const DEFAULT_METHODS = [
  * GET /api/admin/payment-methods
  * Returns ALL payment methods (active + inactive), seeding current defaults if empty.
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -30,7 +34,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: methods });
   } catch (error) {
-    console.error("[ADMIN PAYMENT METHODS GET ERROR]", error);
+    log.error({ err: error }, "admin payment methods get failed");
     return NextResponse.json({ success: false, error: "Gagal memuat data." }, { status: 500 });
   }
 }
@@ -40,7 +44,7 @@ export async function GET() {
  * Create a new payment method.
  * Body: { key, label, group, imageUrl?, sortOrder? }
  */
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -60,7 +64,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: method });
   } catch (error) {
-    console.error("[ADMIN PAYMENT METHODS POST ERROR]", error);
+    log.error({ err: error }, "admin payment methods post failed");
     return NextResponse.json({ success: false, error: "Gagal membuat metode pembayaran." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/payment-methods", GET_handler);
+export const POST = withRequestLog("/api/admin/payment-methods", POST_handler);

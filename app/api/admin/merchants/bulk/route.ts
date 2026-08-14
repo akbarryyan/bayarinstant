@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +22,7 @@ async function ensureAdmin() {
   return session;
 }
 
-export async function PATCH(request: NextRequest) {
+async function PATCH_handler(request: NextRequest) {
   try {
     const session = await ensureAdmin();
     if (!session) {
@@ -53,7 +57,9 @@ export async function PATCH(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[PATCH /api/admin/merchants/bulk]", error);
+    log.error({ err: error }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal memperbarui merchant massal" }, { status: 500 });
   }
 }
+
+export const PATCH = withRequestLog("/api/admin/merchants/bulk", PATCH_handler);

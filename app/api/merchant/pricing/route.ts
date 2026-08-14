@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireSellerSession } from "@/lib/seller";
 import { getMerchantPlatformFeeConfig } from "@/lib/site-config";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ const PricingSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const merchant = await requireSellerSession();
   if ("error" in merchant) {
     return NextResponse.json({ success: false, error: merchant.error }, { status: merchant.status });
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   const merchant = await requireSellerSession();
   if ("error" in merchant) {
     return NextResponse.json({ success: false, error: merchant.error }, { status: merchant.status });
@@ -140,3 +141,6 @@ export async function POST(req: NextRequest) {
     platformFee: await getMerchantPlatformFeeConfig(),
   });
 }
+
+export const GET = withRequestLog("/api/merchant/pricing", GET_handler);
+export const POST = withRequestLog("/api/merchant/pricing", POST_handler);

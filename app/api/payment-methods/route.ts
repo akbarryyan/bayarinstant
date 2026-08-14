@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getPaymentGatewayFeeConfig } from "@/lib/site-config";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.misc");
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +19,7 @@ const STOREFRONT_SUPPORTED_KEYS = new Set(["qris"]);
  * Returns active storefront payment methods from DB, seeding current defaults if empty.
  * Storefront currently exposes only methods supported by the active checkout flow.
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const feeConfig = await getPaymentGatewayFeeConfig("qris");
     const count = await prisma.paymentMethod.count();
@@ -53,7 +57,9 @@ export async function GET() {
       data: storefrontMethods.length > 0 ? storefrontMethods : [qrisMethod],
     });
   } catch (error) {
-    console.error("[PAYMENT METHODS GET ERROR]", error);
+    log.error({ err: error }, "payment methods get failed");
     return NextResponse.json({ success: false, error: "Gagal memuat metode pembayaran." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/payment-methods", GET_handler);

@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
 import { PoppayClient } from "@/src/infra/payment/poppay/poppay.client";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ async function resolvePoppayBankCode(explicitBankCode: string | null | undefined
   );
 }
 
-export async function PATCH(
+async function PATCH_handler(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
@@ -217,3 +218,5 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }
+
+export const PATCH = withRequestLog("/api/admin/seller-withdrawals/[id]", PATCH_handler);

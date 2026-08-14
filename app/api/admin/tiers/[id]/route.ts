@@ -7,10 +7,11 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { z } from "zod";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+async function GET_handler(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { id } = await params;
@@ -31,7 +32,7 @@ const UpdateSchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function PUT_handler(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { id } = await params;
@@ -71,7 +72,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   return NextResponse.json({ success: true, data: tier });
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+async function DELETE_handler(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { id } = await params;
@@ -96,3 +97,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   await prisma.userTier.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
+
+export const GET = withRequestLog("/api/admin/tiers/[id]", GET_handler);
+export const PUT = withRequestLog("/api/admin/tiers/[id]", PUT_handler);
+export const DELETE = withRequestLog("/api/admin/tiers/[id]", DELETE_handler);

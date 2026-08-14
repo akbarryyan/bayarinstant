@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.admin");
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET /api/admin/brands
  * List all distinct brands (from products) merged with their BrandMeta (imageUrl)
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -42,7 +46,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("[ADMIN BRANDS GET ERROR]", error);
+    log.error({ err: error }, "admin brands get failed");
     return NextResponse.json({ success: false, error: "Gagal memuat brand." }, { status: 500 });
   }
 }
@@ -52,7 +56,7 @@ export async function GET() {
  * Upsert imageUrl for a brand
  * Body: { brand: string, imageUrl?: string }
  */
-export async function PUT(request: NextRequest) {
+async function PUT_handler(request: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -72,7 +76,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: meta });
   } catch (error) {
-    console.error("[ADMIN BRANDS PUT ERROR]", error);
+    log.error({ err: error }, "admin brands put failed");
     return NextResponse.json({ success: false, error: "Gagal menyimpan data." }, { status: 500 });
   }
 }
@@ -83,7 +87,7 @@ export async function PUT(request: NextRequest) {
  * Body: { brand: string, inputFields: InputFieldDef[] }
  * InputFieldDef: { key: string, label: string, placeholder: string, required: boolean, width?: string }
  */
-export async function PATCH(request: NextRequest) {
+async function PATCH_handler(request: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -103,7 +107,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: meta });
   } catch (error) {
-    console.error("[ADMIN BRANDS PATCH ERROR]", error);
+    log.error({ err: error }, "admin brands patch failed");
     return NextResponse.json({ success: false, error: "Gagal menyimpan konfigurasi." }, { status: 500 });
   }
 }
@@ -113,7 +117,7 @@ export async function PATCH(request: NextRequest) {
  * Clear imageUrl for a brand
  * Body: { brand: string }
  */
-export async function DELETE(request: NextRequest) {
+async function DELETE_handler(request: NextRequest) {
   try {
     const deny = await requireAdmin();
     if (deny) return deny;
@@ -133,7 +137,12 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[ADMIN BRANDS DELETE ERROR]", error);
+    log.error({ err: error }, "admin brands delete failed");
     return NextResponse.json({ success: false, error: "Gagal menghapus data." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/admin/brands", GET_handler);
+export const PUT = withRequestLog("/api/admin/brands", PUT_handler);
+export const PATCH = withRequestLog("/api/admin/brands", PATCH_handler);
+export const DELETE = withRequestLog("/api/admin/brands", DELETE_handler);

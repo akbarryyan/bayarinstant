@@ -9,10 +9,11 @@ import { z } from "zod";
 import { getBannerImages, setBannerImages } from "@/lib/site-config";
 import { imageRefSchema } from "@/lib/upload";
 import { requireAdmin } from "@/lib/admin-guard";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GET_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -24,7 +25,7 @@ const PutSchema = z.object({
   images: z.array(imageRefSchema).min(1, "Minimal 1 banner"),
 });
 
-export async function PUT(request: Request) {
+async function PUT_handler(request: Request) {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -47,7 +48,7 @@ export async function PUT(request: Request) {
   return NextResponse.json({ success: true, data: parsed.data.images });
 }
 
-export async function DELETE() {
+async function DELETE_handler() {
   const deny = await requireAdmin();
   if (deny) return deny;
 
@@ -56,3 +57,7 @@ export async function DELETE() {
   const images = await getBannerImages();
   return NextResponse.json({ success: true, data: images });
 }
+
+export const GET = withRequestLog("/api/admin/banners", GET_handler);
+export const PUT = withRequestLog("/api/admin/banners", PUT_handler);
+export const DELETE = withRequestLog("/api/admin/banners", DELETE_handler);

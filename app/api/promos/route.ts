@@ -7,13 +7,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/infra/db/prisma";
 import { getSiteConfig } from "@/lib/site-config";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
+import { createLogger } from "@/src/infra/logging/logger";
+
+const log = createLogger("api.misc");
 
 export const dynamic = "force-dynamic";
 
 const DEFAULT_HERO_IMAGE =
   "https://www.vcgamers.com/_next/static/media/image-percent.4146a3ec.png";
 
-export async function GET() {
+async function GET_handler() {
   try {
     const now = new Date();
     const [promos, heroImageUrl] = await Promise.all([
@@ -48,7 +52,9 @@ export async function GET() {
       heroImageUrl: heroImageUrl ?? DEFAULT_HERO_IMAGE,
     });
   } catch (err) {
-    console.error("[GET /api/promos]", err);
+    log.error({ err }, "request failed");
     return NextResponse.json({ success: false, error: "Gagal memuat promo." }, { status: 500 });
   }
 }
+
+export const GET = withRequestLog("/api/promos", GET_handler);

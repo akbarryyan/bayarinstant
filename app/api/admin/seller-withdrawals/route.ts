@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const deny = await requireAdmin();
   if (deny) return deny;
   const { searchParams } = new URL(req.url);
@@ -36,3 +37,5 @@ export async function GET(req: NextRequest) {
     })),
   });
 }
+
+export const GET = withRequestLog("/api/admin/seller-withdrawals", GET_handler);

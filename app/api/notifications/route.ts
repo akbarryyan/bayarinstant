@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 /**
  * GET /api/notifications — returns notifications for current user
  * Includes user-specific + broadcast (userId = null) notifications.
  * Query params: ?limit=20&unreadOnly=false
  */
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const session = await getSession();
   const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") ?? 20), 50);
 
@@ -39,3 +40,5 @@ export async function GET(req: NextRequest) {
     unreadCount,
   });
 }
+
+export const GET = withRequestLog("/api/notifications", GET_handler);
