@@ -206,12 +206,6 @@ function PesananPageContent() {
             <span className="text-xs text-slate-500">Total Bayar</span>
             <span className="text-sm font-bold text-slate-800">Rp {formatPrice(order.amount)}</span>
           </div>
-          {order.fee > 0 && (
-            <div className="flex justify-between">
-              <span className="text-xs text-slate-500">Biaya Admin</span>
-              <span className="text-xs text-slate-600">Rp {formatPrice(order.fee)}</span>
-            </div>
-          )}
           <div className="flex justify-between">
             <span className="text-xs text-slate-500">Metode</span>
             <span className="text-xs text-slate-600">

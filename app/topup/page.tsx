@@ -309,14 +309,6 @@ export default function TopupPage() {
                       <span className="text-slate-500 lg:text-slate-400">Metode</span>
                       <span className="font-semibold text-slate-700 lg:text-slate-700">{methodLabel}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500 lg:text-slate-400">Biaya Admin</span>
-                      {fee > 0 ? (
-                        <span className="font-semibold text-slate-600 lg:text-slate-600">Rp {formatPrice(fee)}</span>
-                      ) : (
-                        <span className="font-semibold text-emerald-500">Gratis</span>
-                      )}
-                    </div>
                     <div className="flex justify-between border-t border-slate-200 pt-2.5 text-sm lg:border-slate-200">
                       <span className="font-bold text-slate-700 lg:text-slate-800">Total Bayar</span>
                       <span className="font-bold text-[#003D99] lg:text-slate-800">{formatRp(total)}</span>

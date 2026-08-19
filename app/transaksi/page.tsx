@@ -210,9 +210,8 @@ export default function TransaksiPage() {
           <AppHeader />
           <div className="fixed left-1/2 top-[60px] z-30 w-full max-w-[480px] -translate-x-1/2 bg-[#003D99] lg:max-w-7xl lg:border-b lg:border-slate-200 lg:bg-white">
             <div className="lg:mx-auto lg:w-full lg:max-w-6xl">
-              <div className="flex items-center gap-2 px-4 pb-3 pt-2 lg:px-0 lg:pb-4 lg:pt-3">
-                <div className="h-9 flex-1 rounded-md bg-white/20 animate-pulse lg:bg-slate-100" />
-                <div className="h-9 w-20 rounded-md bg-white/20 animate-pulse lg:bg-slate-100" />
+              <div className="px-4 pb-3 pt-2 lg:px-0 lg:pb-4 lg:pt-3">
+                <div className="h-9 w-full rounded-md bg-white/20 animate-pulse lg:bg-slate-100" />
               </div>
               <div className="flex gap-2 px-4 pb-3 lg:px-0 lg:pb-4">
                 {[1,2,3,4,5].map(i => <div key={i} className="h-8 w-28 flex-shrink-0 rounded-full bg-white/20 animate-pulse lg:bg-slate-100" />)}
@@ -285,9 +284,9 @@ export default function TransaksiPage() {
                 search box lines up with the cards instead of hugging the edge */}
             <div className="lg:mx-auto lg:w-full lg:max-w-6xl">
               {/* Search row */}
-              <div className="flex items-center gap-2 px-4 pb-3 pt-2 lg:px-0 lg:pb-4 lg:pt-3">
-                <div className="relative flex-1">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              <div className="px-4 pb-3 pt-2 lg:px-0 lg:pb-4 lg:pt-3">
+                <div className="relative">
+                  <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -300,13 +299,6 @@ export default function TransaksiPage() {
                     className="w-full rounded-md border border-transparent bg-white py-2 pl-9 pr-3 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/60 lg:border-slate-200 lg:bg-slate-50 lg:focus:border-[#003D99] lg:focus:ring-blue-100"
                   />
                 </div>
-                <button className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-white/15 px-3 py-2 text-[13px] font-semibold text-white transition hover:bg-white/25 lg:border lg:border-slate-200 lg:bg-white lg:text-slate-600 lg:hover:bg-slate-50">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  Filter
-                </button>
               </div>
 
               {/* Status tabs */}

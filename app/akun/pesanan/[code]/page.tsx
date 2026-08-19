@@ -478,15 +478,9 @@ function OrderDetailPageContent() {
               <div className="flex justify-between">
                 <span className="text-xs text-slate-500">Harga Produk</span>
                 <span className="text-xs font-semibold text-slate-700 lg:text-slate-700">
-                  Rp {formatPrice(order.amount - order.fee)}
+                  Rp {formatPrice(order.amount)}
                 </span>
               </div>
-              {order.fee > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-xs text-slate-500">Biaya Admin</span>
-                  <span className="text-xs text-slate-600">Rp {formatPrice(order.fee)}</span>
-                </div>
-              )}
               <div className="border-t border-slate-100 pt-2 flex justify-between">
                 <span className="text-xs font-bold text-slate-600">Total Bayar</span>
                 <span className="text-sm font-black text-slate-800 lg:text-slate-800">Rp {formatPrice(order.amount)}</span>

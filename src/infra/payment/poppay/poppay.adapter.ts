@@ -20,9 +20,13 @@ export class PoppayAdapter implements IPaymentGatewayPort {
     const siteName = await getSiteName();
     const feeConfig = await getPaymentGatewayFeeConfig(input.method ?? "qris");
     const fee = calculatePaymentGatewayFee(input.method ?? "qris", input.amount, feeConfig);
+    // The admin fee is ours, not Poppay's — Poppay bills exactly what we ask
+    // for. Bill amount + fee so the QR matches the "Total Bayar" the customer
+    // sees; billing input.amount alone would silently drop the fee.
+    const totalPayment = input.amount + fee;
     const incoming = await this.client.createIncoming({
       aggRefId: input.orderId,
-      amount: input.amount,
+      amount: totalPayment,
       notes: input.orderId,
       payorName: input.payerName?.trim() || `${siteName} Customer`,
       payorEmail: input.payerEmail?.trim() || null,
@@ -37,7 +41,7 @@ export class PoppayAdapter implements IPaymentGatewayPort {
       method: "qris",
       amount: input.amount,
       fee,
-      totalPayment: input.amount + fee,
+      totalPayment,
       expiredAt: incoming.expiredAt ? new Date(incoming.expiredAt) : undefined,
       raw: incoming,
     };

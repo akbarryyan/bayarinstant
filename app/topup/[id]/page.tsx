@@ -224,12 +224,6 @@ function TopupStatusPageContent({
                     <span className="text-slate-500 lg:text-slate-400">Nominal</span>
                     <span className="font-bold text-slate-800 lg:text-slate-800">{formatRp(topup.amount)}</span>
                   </div>
-                  {topup.fee > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500 lg:text-slate-400">Biaya Admin</span>
-                      <span className="font-semibold text-slate-600 lg:text-slate-600">{formatRp(topup.fee)}</span>
-                    </div>
-                  )}
                   {topup.totalPayment > 0 && (
                     <div className="flex justify-between border-t border-slate-200 pt-2.5 text-sm lg:border-slate-200">
                       <span className="font-bold text-slate-700 lg:text-slate-800">Total Bayar</span>
@@ -275,12 +269,6 @@ function TopupStatusPageContent({
                     <span className="text-slate-500 lg:text-emerald-100/80">Nominal Top Up</span>
                     <span className="font-bold text-slate-800 lg:text-slate-800">{formatRp(topup.amount)}</span>
                 </div>
-                {topup.fee > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500 lg:text-emerald-100/80">Biaya Admin</span>
-                    <span className="font-semibold text-slate-600 lg:text-emerald-50">{formatRp(topup.fee)}</span>
-                  </div>
-                )}
                 {topup.paymentMethod && (
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500 lg:text-emerald-100/80">Metode</span>
