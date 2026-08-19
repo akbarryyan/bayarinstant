@@ -208,17 +208,19 @@ export default function TransaksiPage() {
         <div className="relative flex min-h-screen w-full max-w-[480px] flex-col bg-white shadow-2xl lg:max-w-7xl lg:bg-[#F5F5F5] lg:shadow-none">
           {/* Header skeleton */}
           <AppHeader />
-          <div className="fixed left-1/2 top-[60px] z-30 w-full max-w-[480px] -translate-x-1/2 bg-[#003D99] lg:max-w-7xl lg:bg-white">
-            <div className="flex items-center gap-2 px-4 pb-3 lg:px-5 lg:pb-4 lg:pt-2">
-              <div className="h-9 flex-1 rounded-md bg-white/20 animate-pulse" />
-              <div className="h-9 w-20 rounded-md bg-white/20 animate-pulse" />
-            </div>
-            <div className="flex gap-2 px-4 pb-3 lg:px-5 lg:pb-4">
-              {[1,2,3,4,5].map(i => <div key={i} className="h-8 w-28 flex-shrink-0 rounded-full bg-white/20 animate-pulse" />)}
+          <div className="fixed left-1/2 top-[60px] z-30 w-full max-w-[480px] -translate-x-1/2 bg-[#003D99] lg:max-w-7xl lg:border-b lg:border-slate-200 lg:bg-white">
+            <div className="lg:mx-auto lg:w-full lg:max-w-6xl">
+              <div className="flex items-center gap-2 px-4 pb-3 pt-2 lg:px-0 lg:pb-4 lg:pt-3">
+                <div className="h-9 flex-1 rounded-md bg-white/20 animate-pulse lg:bg-slate-100" />
+                <div className="h-9 w-20 rounded-md bg-white/20 animate-pulse lg:bg-slate-100" />
+              </div>
+              <div className="flex gap-2 px-4 pb-3 lg:px-0 lg:pb-4">
+                {[1,2,3,4,5].map(i => <div key={i} className="h-8 w-28 flex-shrink-0 rounded-full bg-white/20 animate-pulse lg:bg-slate-100" />)}
+              </div>
             </div>
           </div>
-          {/* Content skeleton */}
-          <div className="flex flex-col gap-3 px-4 pt-5 lg:mx-auto lg:w-full lg:max-w-6xl lg:px-0 lg:pt-8">
+          {/* Content skeleton — offset by the fixed header + search/tab bar */}
+          <div className="flex flex-col gap-3 px-4 pt-[160px] lg:mx-auto lg:w-full lg:max-w-6xl lg:px-0 lg:pt-[172px]">
             {[1,2,3].map(i => (
               <div key={i} className="rounded-2xl border border-slate-100 bg-white p-4 animate-pulse lg:border-slate-200 lg:bg-white">
                 <div className="flex items-center gap-3">
@@ -277,55 +279,59 @@ export default function TransaksiPage() {
 
         {isLoggedIn ? (
           <div
-            className="fixed top-[60px] left-1/2 z-30 w-full max-w-[480px] -translate-x-1/2 bg-[#003D99] lg:max-w-7xl lg:bg-white"
+            className="fixed top-[60px] left-1/2 z-30 w-full max-w-[480px] -translate-x-1/2 bg-[#003D99] lg:max-w-7xl lg:border-b lg:border-slate-200 lg:bg-white"
           >
-            {/* Search row */}
-            <div className="flex items-center gap-2 px-4 pb-3 pt-2 lg:px-5 lg:pb-4 lg:pt-3">
-              <div className="relative flex-1">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Cari ID Pesanan/Nama Barang"
-                  className="w-full pl-9 pr-3 py-2 rounded-md bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-300 text-[13px]"
-                />
-              </div>
-              <button className="flex items-center gap-1.5 rounded-md bg-white/15 px-3 py-2 text-[13px] font-semibold text-white transition hover:bg-white/25">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                Filter
-              </button>
-            </div>
-
-            {/* Status tabs */}
-            <div
-              ref={tabScrollRef}
-              className={`flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide lg:px-5 lg:pb-4 ${
-                search ? "opacity-50" : ""
-              }`}
-              style={{ scrollbarWidth: "none" }}
-            >
-              {TABS.map((t) => (
-                <button
-                  key={t.key}
-                  data-active={activeTab === t.key}
-                  onClick={() => handleTab(t.key)}
-                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-semibold transition whitespace-nowrap ${
-                    activeTab === t.key
-                      ? "bg-white text-[#003D99]"
-                      : "bg-white/15 text-white hover:bg-white/25"
-                  }`}
-                >
-                  {t.label}
+            {/* Inner column — matches the content column width below so the
+                search box lines up with the cards instead of hugging the edge */}
+            <div className="lg:mx-auto lg:w-full lg:max-w-6xl">
+              {/* Search row */}
+              <div className="flex items-center gap-2 px-4 pb-3 pt-2 lg:px-0 lg:pb-4 lg:pt-3">
+                <div className="relative flex-1">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    placeholder="Cari ID Pesanan/Nama Barang"
+                    className="w-full rounded-md border border-transparent bg-white py-2 pl-9 pr-3 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/60 lg:border-slate-200 lg:bg-slate-50 lg:focus:border-[#003D99] lg:focus:ring-blue-100"
+                  />
+                </div>
+                <button className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-white/15 px-3 py-2 text-[13px] font-semibold text-white transition hover:bg-white/25 lg:border lg:border-slate-200 lg:bg-white lg:text-slate-600 lg:hover:bg-slate-50">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  Filter
                 </button>
-              ))}
+              </div>
+
+              {/* Status tabs */}
+              <div
+                ref={tabScrollRef}
+                className={`flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide lg:px-0 lg:pb-4 ${
+                  search ? "opacity-60" : ""
+                }`}
+                style={{ scrollbarWidth: "none" }}
+              >
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    data-active={activeTab === t.key}
+                    onClick={() => handleTab(t.key)}
+                    className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-semibold transition whitespace-nowrap ${
+                      activeTab === t.key
+                        ? "bg-white text-[#003D99] lg:bg-[#003D99] lg:text-white"
+                        : "bg-white/15 text-white hover:bg-white/25 lg:bg-slate-100 lg:text-slate-600 lg:hover:bg-slate-200"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         ) : null}
@@ -339,9 +345,9 @@ export default function TransaksiPage() {
               <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
-              <p className="text-[12px] leading-snug text-amber-700 lg:text-amber-100">
+              <p className="text-[12px] leading-snug text-amber-700">
                 Hubungi{" "}
-                <span className="cursor-pointer font-bold text-[#003D99] lg:text-slate-800">Customer Support</span>
+                <span className="cursor-pointer font-bold text-[#003D99]">Customer Support</span>
                 {" "}jika status pembayaran tidak berubah hingga 5 menit sejak kamu melakukan pembayaran.
               </p>
             </div>
@@ -364,7 +370,7 @@ export default function TransaksiPage() {
 
           {isLoggedIn && fetchError ? (
             <div className="mx-4 mb-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 lg:border-red-500/20 lg:bg-red-500/10">
-              <p className="text-xs font-medium text-red-600 lg:text-red-200">{fetchError}</p>
+              <p className="text-xs font-medium text-red-600">{fetchError}</p>
             </div>
           ) : null}
 
@@ -397,7 +403,7 @@ export default function TransaksiPage() {
 
                   {guestSearchError ? (
                     <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 lg:border-red-500/20 lg:bg-red-500/10">
-                      <p className="text-xs font-medium text-red-600 lg:text-red-200">{guestSearchError}</p>
+                      <p className="text-xs font-medium text-red-600">{guestSearchError}</p>
                     </div>
                   ) : null}
 
@@ -407,7 +413,7 @@ export default function TransaksiPage() {
                     className={`w-full rounded-xl py-3 text-sm font-bold transition ${
                       guestOrderCode.trim() && !guestSearching
                         ? "bg-[#003D99] text-white hover:bg-blue-800"
-                        : "cursor-not-allowed bg-slate-200 text-slate-400 lg:bg-white/10 lg:text-slate-500"
+                        : "cursor-not-allowed bg-slate-200 text-slate-400"
                     }`}
                   >
                     {guestSearching ? "Mencari..." : "Lihat Transaksi"}
@@ -419,7 +425,7 @@ export default function TransaksiPage() {
                 <p className="text-xs text-slate-400 lg:text-slate-500">Punya akun? Login untuk melihat semua transaksi.</p>
                 <button
                   onClick={() => router.push("/login")}
-                  className="mt-2 text-sm font-semibold text-[#003D99] lg:text-blue-300"
+                  className="mt-2 text-sm font-semibold text-[#003D99]"
                 >
                   Masuk Sekarang
                 </button>
