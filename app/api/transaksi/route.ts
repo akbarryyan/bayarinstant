@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
 import { syncExpiredOrdersForUser } from "@/src/core/services/order/sync-expired-orders.service";
@@ -28,26 +29,27 @@ async function GET_handler(req: NextRequest) {
 
     const { searchParams } = req.nextUrl;
     const tab = searchParams.get("tab") ?? "menunggu";
-    const q   = (searchParams.get("q") ?? "").trim().toLowerCase();
+    const q   = (searchParams.get("q") ?? "").trim();
     const page  = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = 15;
     const skip  = (page - 1) * limit;
 
-    const statuses = TAB_STATUSES[tab] ?? [];
-
-    // Build where clause
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {
-      userId: session.userId,
-      ...(statuses.length > 0 ? { status: { in: statuses } } : { status: { in: [] } }),
-    };
+    // Build where clause.
+    // NOTE: no `mode: "insensitive"` — MySQL's default collation is already
+    // case-insensitive and the connector rejects that argument.
+    const where: Prisma.OrderWhereInput = { userId: session.userId };
 
     if (q) {
+      // Searching spans every status — a tab filter would hide the order the
+      // user is looking for (guest lookup by code has no status filter either).
       where.OR = [
-        { orderCode: { contains: q, mode: "insensitive" } },
-        { product: { name: { contains: q, mode: "insensitive" } } },
-        { product: { brand: { contains: q, mode: "insensitive" } } },
+        { orderCode:    { contains: q } },
+        { targetNumber: { contains: q } },
+        { product: { name:  { contains: q } } },
+        { product: { brand: { contains: q } } },
       ];
+    } else {
+      where.status = { in: TAB_STATUSES[tab] ?? [] };
     }
 
     let [total, orders] = await Promise.all([

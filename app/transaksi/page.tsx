@@ -118,6 +118,7 @@ export default function TransaksiPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   const tabScrollRef = useRef<HTMLDivElement>(null);
@@ -137,17 +138,24 @@ export default function TransaksiPage() {
   const fetchOrders = useCallback(
     async (tab: TabKey, q: string, pg: number) => {
       setLoading(true);
+      setFetchError(null);
       try {
         const params = new URLSearchParams({ tab, page: String(pg) });
         if (q) params.set("q", q);
         const res  = await fetch(`/api/transaksi?${params}`, { cache: "no-store" });
         const data = await res.json();
-        if (data.success) {
-          setOrders(data.data);
-          setMeta(data.meta);
+        if (!res.ok || !data.success) {
+          setOrders([]);
+          setMeta(null);
+          setFetchError(data.message ?? "Gagal memuat transaksi. Coba lagi.");
+          return;
         }
+        setOrders(data.data);
+        setMeta(data.meta);
       } catch {
-        // silently ignore
+        setOrders([]);
+        setMeta(null);
+        setFetchError("Gagal memuat transaksi. Coba lagi.");
       } finally {
         setLoading(false);
       }
@@ -176,6 +184,14 @@ export default function TransaksiPage() {
       setSearch(val);
       setPage(1);
     }, 400);
+  };
+
+  // Searching ignores the tab filter — clearing it returns to the active tab.
+  const clearSearch = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setSearchInput("");
+    setSearch("");
+    setPage(1);
   };
 
   // ─── Scroll active tab into view ───────────────────────────────────────────
@@ -291,7 +307,9 @@ export default function TransaksiPage() {
             {/* Status tabs */}
             <div
               ref={tabScrollRef}
-              className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide lg:px-5 lg:pb-4"
+              className={`flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide lg:px-5 lg:pb-4 ${
+                search ? "opacity-50" : ""
+              }`}
               style={{ scrollbarWidth: "none" }}
             >
               {TABS.map((t) => (
@@ -326,6 +344,27 @@ export default function TransaksiPage() {
                 <span className="cursor-pointer font-bold text-[#003D99] lg:text-slate-800">Customer Support</span>
                 {" "}jika status pembayaran tidak berubah hingga 5 menit sejak kamu melakukan pembayaran.
               </p>
+            </div>
+          ) : null}
+
+          {/* Search spans every status — say so, since the tabs no longer apply */}
+          {isLoggedIn && search ? (
+            <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 lg:border-slate-200 lg:bg-white">
+              <p className="text-[12px] leading-snug text-slate-500">
+                Menampilkan hasil pencarian dari semua status
+              </p>
+              <button
+                onClick={clearSearch}
+                className="flex-shrink-0 text-[12px] font-semibold text-[#003D99] hover:underline"
+              >
+                Hapus pencarian
+              </button>
+            </div>
+          ) : null}
+
+          {isLoggedIn && fetchError ? (
+            <div className="mx-4 mb-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 lg:border-red-500/20 lg:bg-red-500/10">
+              <p className="text-xs font-medium text-red-600 lg:text-red-200">{fetchError}</p>
             </div>
           ) : null}
 
@@ -411,7 +450,7 @@ export default function TransaksiPage() {
           )}
 
           {/* Empty state */}
-          {isLoggedIn && !loading && orders.length === 0 && (
+          {isLoggedIn && !loading && !fetchError && orders.length === 0 && (
             <div className="flex flex-col items-center justify-center px-8 py-16">
               {/* Robot illustration SVG */}
               <div className="w-44 h-44 mb-4">
