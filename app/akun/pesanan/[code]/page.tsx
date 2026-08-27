@@ -391,7 +391,7 @@ function OrderDetailPageContent() {
           )}
 
           {order.status === "WAITING_PAYMENT" && isPendingPayment && (
-            <div className="flex items-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 lg:border-yellow-500/20 lg:bg-yellow-500/10">
+            <div className="flex items-center gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3">
               <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -399,8 +399,8 @@ function OrderDetailPageContent() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-bold text-yellow-800 lg:text-yellow-50">Belum Dibayar</p>
-                <p className="text-[11px] text-yellow-700 lg:text-yellow-100/80">Selesaikan pembayaran sebelum kedaluwarsa.</p>
+                <p className="text-sm font-bold text-yellow-900">Belum Dibayar</p>
+                <p className="text-[11px] text-yellow-800">Selesaikan pembayaran sebelum kedaluwarsa.</p>
               </div>
             </div>
           )}
