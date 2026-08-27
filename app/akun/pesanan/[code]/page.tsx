@@ -618,7 +618,7 @@ function OrderDetailPageContent() {
                       </div>
                       <div className={`mt-3 flex items-center justify-center gap-2 ${isQrisExpired ? "opacity-50 grayscale" : ""}`}>
                         <span className="text-[11px] font-semibold text-slate-500">
-                          QRIS Supported by
+                          QRIS supported by
                         </span>
                         <img
                           src="/images.png"
