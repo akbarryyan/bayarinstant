@@ -547,17 +547,24 @@ export default function TransaksiPage() {
                       </p>
                     </div>
 
-                    {/* CTA for waiting payment */}
-                    {(order.status === "WAITING_PAYMENT" || order.status === "CREATED") && (
-                      <div className="px-4 pb-4">
+                    {/* CTA — pay when still unpaid, otherwise open the detail page */}
+                    <div className="px-4 pb-4">
+                      {order.status === "WAITING_PAYMENT" || order.status === "CREATED" ? (
                         <button
                           onClick={() => router.push(`/akun/pesanan/${encodeURIComponent(order.orderCode)}`)}
                           className="w-full bg-[#003D99] hover:bg-blue-800 active:bg-blue-900 text-white text-xs font-semibold py-2.5 rounded-xl transition"
                         >
                           Bayar Sekarang
                         </button>
-                      </div>
-                    )}
+                      ) : (
+                        <button
+                          onClick={() => router.push(`/akun/pesanan/${encodeURIComponent(order.orderCode)}`)}
+                          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-[#003D99] transition hover:bg-slate-50 active:bg-slate-100"
+                        >
+                          Lihat Detail
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
