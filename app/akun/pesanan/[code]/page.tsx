@@ -360,15 +360,15 @@ function OrderDetailPageContent() {
 
           {/* ── Status Banner ─────────────────────────────────────────────── */}
           {order.status === "SUCCESS" && (
-            <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 lg:border-green-500/20 lg:bg-green-500/10">
+            <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
               <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-bold text-green-800 lg:text-green-50">Transaksi Berhasil!</p>
-                <p className="text-[11px] text-green-600 lg:text-green-100/80">Produk sudah berhasil diproses.</p>
+                <p className="text-sm font-bold text-green-900">Transaksi Berhasil!</p>
+                <p className="text-[11px] text-green-800">Produk sudah berhasil diproses.</p>
               </div>
             </div>
           )}
@@ -529,14 +529,14 @@ function OrderDetailPageContent() {
 
           {/* ── Serial Number ─────────────────────────────────────────────── */}
           {order.serialNumber && (
-            <div className="rounded-2xl border border-green-200 bg-green-50 p-4 lg:border-green-500/20 lg:bg-green-500/10">
+            <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
               <p className="text-[11px] font-bold text-green-700 mb-1.5">
                 ✅ Serial Number / Kode Voucher
               </p>
-              <p className="break-all text-base font-mono font-black tracking-wide text-green-800 lg:text-green-50">
+              <p className="break-all text-base font-mono font-black tracking-wide text-green-900">
                 {order.serialNumber}
               </p>
-              <p className="mt-1.5 text-[10px] text-green-600 lg:text-green-100/80">
+              <p className="mt-1.5 text-[10px] text-green-800">
                 Screenshot atau salin kode ini sebagai bukti pembelian.
               </p>
             </div>
