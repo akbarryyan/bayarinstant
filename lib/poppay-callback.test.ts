@@ -14,6 +14,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const ORDER_CODE = "WP-260908-XYZ789";
+/** refId yang Poppay terbitkan; kita simpan sebagai PaymentInvoice.invoiceId. */
+const POPPAY_REF = "POP-REF-1";
 
 interface Row {
   eventId: string;
@@ -24,6 +26,8 @@ interface Row {
 const webhookEvents = new Map<string, Row>();
 let orderRow: Record<string, unknown> | null = null;
 let inquiryStatus: string | Error = "completed";
+let invoiceUpdates = 0;
+let topupRow: Record<string, unknown> | null = null;
 
 /**
  * Cukup permukaan Prisma yang benar-benar disentuh alur callback ini. Tabel
@@ -32,8 +36,12 @@ let inquiryStatus: string | Error = "completed";
  */
 const tables = {
   orderProviderLog: { create: async () => ({}) },
-  wallet: { findUnique: async () => null },
-  ledgerEntry: { findFirst: async () => null },
+  wallet: {
+    findUnique: async () => null,
+    upsert: async () => ({ id: "wallet_1", userId: "user_1", balance: 0 }),
+    update: async () => ({}),
+  },
+  ledgerEntry: { findFirst: async () => null, create: async () => ({}) },
   webhookEvent: {
     findUnique: async ({ where }: { where: { eventId: string } }) =>
       webhookEvents.get(where.eventId) ?? null,
@@ -55,6 +63,13 @@ const tables = {
       return updated;
     },
   },
+  walletTopup: {
+    findUnique: async () => topupRow,
+    update: async ({ data }: { data: Record<string, unknown> }) => {
+      topupRow = { ...topupRow, ...data };
+      return topupRow;
+    },
+  },
   order: {
     findUnique: async () => orderRow,
     update: async ({ data }: { data: Record<string, unknown> }) => {
@@ -64,7 +79,10 @@ const tables = {
     updateMany: async () => ({ count: 1 }),
   },
   paymentInvoice: {
-    update: async () => ({}),
+    update: async () => {
+      invoiceUpdates += 1;
+      return {};
+    },
   },
 };
 
@@ -89,7 +107,7 @@ const { handlePoppayCallback } = await import("@/lib/poppay-callback");
 
 /** status 5 = lunas menurut Poppay */
 const PAYLOAD = {
-  refid: "POP-REF-1",
+  refid: POPPAY_REF,
   agg_refid: ORDER_CODE,
   amount: 50000,
   status: 5,
@@ -103,6 +121,8 @@ describe("handlePoppayCallback — event yang boleh dicoba ulang", () => {
   beforeEach(() => {
     webhookEvents.clear();
     inquiryStatus = "completed";
+    invoiceUpdates = 0;
+    topupRow = null;
     orderRow = {
       id: "order_1",
       orderCode: ORDER_CODE,
@@ -115,7 +135,14 @@ describe("handlePoppayCallback — event yang boleh dicoba ulang", () => {
       targetData: {},
       providerRef: null,
       product: { id: "product_1", name: "ML 100 Diamond", providerCode: "ML100", type: "game" },
-      paymentInvoice: { id: "inv_1", invoiceId: "INV-1", status: "PENDING", method: "qris", paidAt: null },
+        paymentInvoice: {
+        id: "inv_1",
+        invoiceId: POPPAY_REF,
+        status: "PENDING",
+        method: "qris",
+        totalPayment: 50000,
+        paidAt: null,
+      },
     };
   });
 
@@ -164,5 +191,105 @@ describe("handlePoppayCallback — event yang boleh dicoba ulang", () => {
 
     expect(result.action).toBe("completed_order");
     expect(lastEvent().processed).toBe(true);
+  });
+});
+
+describe("handlePoppayCallback — callback harus terikat ke invoice yang kita terbitkan", () => {
+  beforeEach(() => {
+    webhookEvents.clear();
+    inquiryStatus = "completed";
+    invoiceUpdates = 0;
+    topupRow = null;
+    orderRow = {
+      id: "order_1",
+      orderCode: ORDER_CODE,
+      userId: null,
+      status: "WAITING_PAYMENT",
+      paymentMethod: "PAYMENT_GATEWAY",
+      provider: "DIGIFLAZZ",
+      amount: 50000,
+      targetNumber: "6281234567890",
+      targetData: {},
+      providerRef: null,
+      product: { id: "product_1", name: "ML 100 Diamond", providerCode: "ML100", type: "game" },
+      paymentInvoice: {
+        id: "inv_1",
+        invoiceId: POPPAY_REF,
+        status: "PENDING",
+        method: "qris",
+        totalPayment: 50000,
+        paidAt: null,
+      },
+    };
+  });
+
+  it("menolak refid yang bukan invoice milik order ini", async () => {
+    // refid milik transaksi lain yang memang lunas di Poppay — inquiry akan
+    // membenarkannya. Tanpa pengikatan, satu pembayaran Rp1.000 milik penyerang
+    // bisa melunasi order mana pun.
+    const payload = { ...PAYLOAD, refid: "POP-REF-MILIK-ORANG-LAIN" };
+
+    const result = await handlePoppayCallback(payload, payload);
+
+    expect(result.action).toBe("refid_mismatch");
+    expect(orderRow?.status).toBe("WAITING_PAYMENT");
+    expect(invoiceUpdates).toBe(0);
+  });
+
+  it("menolak nominal yang tidak sama dengan yang ditagihkan", async () => {
+    const payload = { ...PAYLOAD, amount: 1000 };
+
+    const result = await handlePoppayCallback(payload, payload);
+
+    expect(result.action).toBe("amount_mismatch");
+    expect(orderRow?.status).toBe("WAITING_PAYMENT");
+    expect(invoiceUpdates).toBe(0);
+  });
+
+  it("menerima callback yang refid dan nominalnya cocok", async () => {
+    const result = await handlePoppayCallback(PAYLOAD, PAYLOAD);
+
+    expect(result.action).toBe("completed_order");
+    expect(orderRow?.status).toBe("SUCCESS");
+  });
+
+  it("menolak refid yang bukan invoice milik topup ini", async () => {
+    topupRow = {
+      id: "topup_1",
+      topupCode: "WT-260908-0001",
+      userId: "user_1",
+      status: "PENDING",
+      amount: 50000,
+      fee: 0,
+      totalPayment: 50000,
+      invoiceId: "POP-REF-TOPUP",
+      paymentMethod: "qris",
+    };
+    const payload = { ...PAYLOAD, agg_refid: "WT-260908-0001", refid: "POP-REF-MILIK-ORANG-LAIN" };
+
+    const result = await handlePoppayCallback(payload, payload);
+
+    expect(result.action).toBe("refid_mismatch");
+    expect(topupRow?.status).toBe("PENDING");
+  });
+
+  it("menolak nominal topup yang tidak sama dengan yang ditagihkan", async () => {
+    topupRow = {
+      id: "topup_1",
+      topupCode: "WT-260908-0001",
+      userId: "user_1",
+      status: "PENDING",
+      amount: 50000,
+      fee: 0,
+      totalPayment: 50000,
+      invoiceId: "POP-REF-TOPUP",
+      paymentMethod: "qris",
+    };
+    const payload = { ...PAYLOAD, agg_refid: "WT-260908-0001", refid: "POP-REF-TOPUP", amount: 1000 };
+
+    const result = await handlePoppayCallback(payload, payload);
+
+    expect(result.action).toBe("amount_mismatch");
+    expect(topupRow?.status).toBe("PENDING");
   });
 });

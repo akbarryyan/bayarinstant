@@ -9,8 +9,18 @@ import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
 
-type VerificationResult =
-  | { mode: "verified" | "skipped" | "invalid"; reason?: string };
+type VerificationResult = {
+  mode: "verified" | "skipped" | "invalid";
+  reason?: string;
+  /**
+   * True kalau penolakan ini harus benar-benar menghentikan callback. Dibedakan
+   * dari `mode` karena signature yang tidak cocok saat verifikasi belum
+   * diwajibkan hanya layak jadi peringatan: skema signature Poppay masih
+   * ditebak dari sembilan kandidat di bawah, jadi menolak secara default
+   * berisiko memutus seluruh callback yang sah.
+   */
+  enforced?: boolean;
+};
 
 function readHeader(headers: Headers, keys: string[]): string {
   for (const key of keys) {
@@ -58,7 +68,11 @@ async function verifyPoppayWebhookSignature(
 
   if (!secret) {
     if (signatureRequired) {
-      return { mode: "invalid", reason: "POPPAY_SECRET_KEY belum diisi saat strict verification aktif." };
+      return {
+        mode: "invalid",
+        reason: "POPPAY_SECRET_KEY belum diisi saat strict verification aktif.",
+        enforced: true,
+      };
     }
     return { mode: "skipped" };
   }
@@ -78,7 +92,11 @@ async function verifyPoppayWebhookSignature(
 
   if (!signature) {
     if (signatureRequired) {
-      return { mode: "invalid", reason: "Header signature callback tidak ditemukan." };
+      return {
+        mode: "invalid",
+        reason: "Header signature callback tidak ditemukan.",
+        enforced: true,
+      };
     }
     log.warn("poppay signature header missing — verification skipped");
     return { mode: "skipped" };
@@ -108,7 +126,11 @@ async function verifyPoppayWebhookSignature(
 
   const isValid = candidates.some((candidate) => safeEqualHex(candidate, signature));
   if (!isValid) {
-    return { mode: "invalid", reason: "Signature callback Poppay tidak valid." };
+    return {
+      mode: "invalid",
+      reason: "Signature callback Poppay tidak valid.",
+      enforced: signatureRequired,
+    };
   }
 
   return { mode: "verified" };
@@ -179,6 +201,28 @@ async function POST_handler(request: Request) {
 
   try {
     const verification = await verifyPoppayWebhookSignature(request.headers, rawBody, payload);
+
+    if (verification.mode === "invalid" && verification.enforced) {
+      // Inilah yang membuat POPPAY_WEBHOOK_SIGNATURE_REQUIRED berarti sesuatu.
+      // Sebelumnya flag itu aktif pun callback tetap diteruskan.
+      log.error(
+        { reason: verification.reason, refId: payload.refid, aggRefId: payload.agg_refid },
+        "poppay callback ditolak: signature tidak lolos verifikasi"
+      );
+      return NextResponse.json(
+        {
+          status: "success",
+          message: "Signature verification failed",
+          data: {
+            id: payload.refid,
+            created_at: new Date().toISOString(),
+            verification: verification.mode,
+          },
+        },
+        { status: 200 }
+      );
+    }
+
     if (verification.mode === "invalid") {
       log.warn(
         { mode: verification.mode, reason: verification.reason, refId: payload.refid },
