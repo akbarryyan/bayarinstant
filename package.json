@@ -37,7 +37,8 @@
     "react-dom": "19.2.3",
     "react-quill-new": "^3.8.3",
     "server-only": "^0.0.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
