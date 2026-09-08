@@ -59,6 +59,8 @@ function StatusBadge({ status }: { status: string }) {
 interface OrderDetail {
   orderCode: string;
   status: string;
+  /** true = dibuka tanpa token/sesi pemilik, detail sensitif tidak dikirim */
+  redacted?: boolean;
   amount: number;
   fee: number;
   paymentMethod: string;
@@ -499,6 +501,20 @@ function OrderDetailPageContent() {
               </div>
             </div>
           </div>
+
+          {order.redacted && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-[11px] font-bold text-amber-800 mb-1">
+                Detail pesanan disembunyikan
+              </p>
+              <p className="text-[11px] leading-relaxed text-amber-800">
+                Kamu membuka pesanan ini hanya dengan kode order, jadi nomor tujuan
+                disamarkan dan kode voucher serta data pembayaran tidak ditampilkan.
+                Buka lewat tautan pesanan yang kamu terima saat checkout, atau masuk
+                dengan akun pemilik pesanan, untuk melihat detail lengkapnya.
+              </p>
+            </div>
+          )}
 
           <div className="rounded-2xl border border-slate-100 bg-white shadow-sm lg:border-slate-200 lg:bg-white lg:shadow-none">
             <div className="px-4 pt-4 pb-3 border-b border-slate-100">
