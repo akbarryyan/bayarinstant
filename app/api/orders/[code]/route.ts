@@ -15,6 +15,7 @@ import { OrderRepository } from "@/src/infra/db/repositories/order.repository";
 import { getSession } from "@/lib/session";
 import { syncExpiredOrderByCode } from "@/src/core/services/order/sync-expired-orders.service";
 import { autoReconcileOrderNow } from "@/src/core/services/provider/reconcile-scheduler.service";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -43,6 +44,12 @@ async function GET_handler(
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    // Endpoint ini boleh diakses tanpa login, dan kode order berpola
+    // WP-YYMMDD- + 6 hex. Pembatas laju inilah yang membuat menyapu seluruh
+    // ruang kode dalam sehari menjadi tidak praktis.
+    const denied = enforceRateLimit(request.headers, "order-lookup", RATE_LIMITS.orderLookup);
+    if (denied) return denied;
+
     const { code } = await params;
     const { searchParams } = new URL(request.url);
     const rawToken = searchParams.get("token");

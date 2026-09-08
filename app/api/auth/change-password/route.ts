@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -9,6 +10,10 @@ const log = createLogger("api.auth");
 
 async function POST_handler(req: NextRequest) {
   try {
+    // Menebak password lama dari sesi yang sudah dicuri.
+    const denied = enforceRateLimit(req.headers, "change-password", RATE_LIMITS.changePassword);
+    if (denied) return denied;
+
     const session = await getSession();
 
     if (!session.isLoggedIn || !session.userId) {

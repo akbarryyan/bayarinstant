@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -36,6 +37,20 @@ async function POST_handler(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Dua lapis, dan keduanya diperiksa sebelum DB maupun bcrypt disentuh.
+    // Batas per akun menghentikan tebak password pada satu korban; batas per
+    // IP menghentikan satu password disapukan ke ribuan akun.
+    const deniedPerIp = enforceRateLimit(req.headers, "login-ip", RATE_LIMITS.loginPerIp);
+    if (deniedPerIp) return deniedPerIp;
+
+    const deniedPerAccount = enforceRateLimit(
+      req.headers,
+      "login",
+      RATE_LIMITS.login,
+      String(identifier).trim().toLowerCase()
+    );
+    if (deniedPerAccount) return deniedPerAccount;
 
     // --- Cari user ---
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

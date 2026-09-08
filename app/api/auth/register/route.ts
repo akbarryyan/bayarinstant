@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSiteName } from "@/lib/site-config";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -11,6 +12,10 @@ const log = createLogger("api.auth");
 
 async function POST_handler(req: NextRequest) {
   try {
+    // Pendaftaran massal membuat akun sampah dan membebani jalur OTP.
+    const denied = enforceRateLimit(req.headers, "register", RATE_LIMITS.register);
+    if (denied) return denied;
+
     const siteName = await getSiteName();
     const body = await req.json();
     const { name, email, phone, password, confirmPassword } = body;

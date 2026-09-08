@@ -20,6 +20,7 @@ import {
   NotFoundError,
 } from "@/src/core/domain/errors/domain.errors";
 import { isLoginRequiredForPurchase } from "@/lib/auth-config";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -108,6 +109,11 @@ async function markVoucherUsed(voucherId: string, userId: string | null, orderId
 
 async function POST_handler(request: Request) {
   try {
+    // Tiap checkout menerbitkan invoice ke payment gateway — spam di sini
+    // berbiaya nyata, bukan sekadar beban server.
+    const denied = enforceRateLimit(request.headers, "checkout", RATE_LIMITS.checkout);
+    if (denied) return denied;
+
     // ── 1. Parse body ──────────────────────────────────────────────────────
     let body: unknown;
     try {
