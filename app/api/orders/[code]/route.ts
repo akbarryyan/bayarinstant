@@ -24,6 +24,20 @@ export const dynamic = "force-dynamic";
 
 const orderRepo = new OrderRepository();
 
+/**
+ * Menyisakan awalan dan akhiran secukupnya supaya pemilik pesanan masih
+ * mengenali nomornya sendiri, tanpa memberi nomor utuh kepada penebak kode.
+ * Dipakai untuk nomor HP, ID game, maupun nomor pelanggan PLN.
+ */
+function maskTargetNumber(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= 6) return "*".repeat(trimmed.length);
+
+  const head = trimmed.slice(0, 3);
+  const tail = trimmed.slice(-3);
+  return `${head}${"*".repeat(trimmed.length - 6)}${tail}`;
+}
+
 async function GET_handler(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
@@ -46,19 +60,20 @@ async function GET_handler(
     const session = await getSession();
     const sessionUserId = session.isLoggedIn ? session.userId : null;
 
-    if (order.userId) {
-      const isOwnerOrAdmin = session.role === "ADMIN" || sessionUserId === order.userId;
-      if (!isOwnerOrAdmin && rawToken) {
-        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-        if (!order.viewTokenHash || order.viewTokenHash !== tokenHash) {
-          return NextResponse.json({ success: false, error: "Invalid token" }, { status: 403 });
-        }
-      }
-    } else if (rawToken) {
+    // `order.userId` wajib dicek lebih dulu: pada order guest keduanya null,
+    // dan `null === null` akan memberi akses penuh ke pengunjung anonim.
+    const isOwnerOrAdmin =
+      session.role === "ADMIN" ||
+      (Boolean(order.userId) && sessionUserId === order.userId);
+
+    let hasFullAccess = isOwnerOrAdmin;
+
+    if (!hasFullAccess && rawToken) {
       const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
       if (!order.viewTokenHash || order.viewTokenHash !== tokenHash) {
         return NextResponse.json({ success: false, error: "Invalid token" }, { status: 403 });
       }
+      hasFullAccess = true;
     }
 
     if (order.status === "PAID" || order.status === "PROCESSING_PROVIDER") {
@@ -68,25 +83,63 @@ async function GET_handler(
       }
     }
 
-    // ── Shape response (minimal — no internal fields) ──────────────────────
+    // ── Shape response ─────────────────────────────────────────────────────
+    // Bentuknya sengaja sama untuk kedua tingkat akses: field sensitif diisi
+    // null, bukan dihilangkan, supaya halaman yang sudah ada tidak menemukan
+    // `undefined` di tempat yang ia harap ada nilainya.
+    const publicView = {
+      orderCode: order.orderCode,
+      status: order.status,
+      product: {
+        name: order.product.name,
+        category: order.product.category,
+        brand: order.product.brand,
+      },
+      amount: Number(order.amount),
+      fee: Number(order.fee),
+      paymentMethod: order.paymentMethod,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    };
+
+    if (!hasFullAccess) {
+      // Cukup untuk menjawab "pesanan saya sampai mana", tanpa menyerahkan
+      // barangnya. `serialNumber` adalah voucher yang dibeli dan
+      // `paymentNumber` adalah string QRIS-nya — keduanya bernilai bagi siapa
+      // pun yang menebak kode order.
+      return NextResponse.json({
+        success: true,
+        data: {
+          ...publicView,
+          redacted: true,
+          targetNumber: maskTargetNumber(order.targetNumber),
+          targetData: null,
+          notes: null,
+          serialNumber: null,
+          paymentInvoice: order.paymentInvoice
+            ? {
+                status: order.paymentInvoice.status,
+                method: order.paymentInvoice.method,
+                expiredAt: order.paymentInvoice.expiredAt,
+                paidAt: order.paymentInvoice.paidAt,
+                paymentUrl: null,
+                paymentNumber: null,
+              }
+            : null,
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        orderCode: order.orderCode,
-        status: order.status,
-        product: {
-          name: order.product.name,
-          category: order.product.category,
-          brand: order.product.brand,
-        },
+        ...publicView,
+        redacted: false,
         targetNumber: order.targetNumber,
         targetData: order.targetData,
         notes: order.notes ?? null,
-        amount: Number(order.amount),
         basePrice: Number(order.basePrice),
         markup: Number(order.markup),
-        fee: Number(order.fee),
-        paymentMethod: order.paymentMethod,
         serialNumber: order.serialNumber ?? null,
         paymentInvoice: order.paymentInvoice
           ? {
@@ -98,8 +151,6 @@ async function GET_handler(
               paidAt: order.paymentInvoice.paidAt,
             }
           : null,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
       },
     });
   } catch (err) {
