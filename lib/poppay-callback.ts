@@ -36,7 +36,9 @@ export interface PoppayCallbackResult {
     | "ignored"
     | "not_found"
     | "execute_failed"
-    | "inquiry_mismatch";
+    | "inquiry_mismatch"
+    | "refid_mismatch"
+    | "amount_mismatch";
   orderId?: string;
   topupId?: string;
   withdrawalId?: string;
@@ -64,6 +66,9 @@ async function confirmCompletedViaInquiry(refId: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Kode status Poppay untuk transaksi lunas. */
+const POPPAY_STATUS_PAID = 5;
 
 function resolveTopupTerminalStatus(status: number): "COMPLETED" | "EXPIRED" | "FAILED" | null {
   if (status === 5) return "COMPLETED";
@@ -120,9 +125,11 @@ function logHandled(
   result: Omit<PoppayCallbackResult, "duplicate">
 ): void {
   const level =
-    result.action === "not_found" ||
-    result.action === "inquiry_mismatch" ||
-    result.action === "execute_failed"
+    result.action === "refid_mismatch" || result.action === "amount_mismatch"
+      ? "error"
+      : result.action === "not_found" ||
+        result.action === "inquiry_mismatch" ||
+        result.action === "execute_failed"
       ? "warn"
       : "info";
 
@@ -158,7 +165,43 @@ function logHandled(
 function retryReasonFor(action: PoppayCallbackResult["action"]): string | undefined {
   if (action === "not_found") return "Data terkait callback belum ditemukan";
   if (action === "inquiry_mismatch") return "Cross-check inquiry Poppay belum mengonfirmasi lunas";
+  if (action === "refid_mismatch") return "refid callback bukan invoice yang kita terbitkan";
+  if (action === "amount_mismatch") return "Nominal callback tidak sama dengan yang ditagihkan";
   return undefined;
+}
+
+/**
+ * Callback Poppay hanya boleh menyentuh transaksi yang refid-nya memang kita
+ * terbitkan untuk transaksi itu.
+ *
+ * Tanpa pengikatan ini, satu-satunya pengaman adalah
+ * `confirmCompletedViaInquiry()` — dan inquiry cuma menjawab "apakah refid ini
+ * lunas di Poppay", bukan "apakah refid ini milik order ini". Signature pun
+ * tidak menutup celahnya karena verifikasinya masih opsional. Artinya siapa pun
+ * yang memegang satu refid lunas yang sah (misalnya hasil membayar Rp1.000
+ * sendiri) bisa mengirim callback dengan agg_refid order mana pun dan order itu
+ * akan diproses.
+ *
+ * Nominal hanya dicek saat callback mengklaim lunas (status 5). Untuk status
+ * lain — expired, cancel — nominal bukan keputusan uang, dan gateway belum
+ * tentu mengisinya; mengecek di sana hanya akan menggantung order yang
+ * seharusnya bisa ditutup.
+ */
+function findCallbackBindingViolation(input: {
+  payload: PoppayCallbackPayload;
+  boundInvoiceId: string | null | undefined;
+  billedTotal: number;
+}): "refid_mismatch" | "amount_mismatch" | null {
+  const { payload, boundInvoiceId, billedTotal } = input;
+
+  if (!boundInvoiceId || boundInvoiceId !== payload.refid) return "refid_mismatch";
+
+  if (payload.status === POPPAY_STATUS_PAID) {
+    const paid = Number(payload.amount);
+    if (!Number.isFinite(paid) || paid !== billedTotal) return "amount_mismatch";
+  }
+
+  return null;
 }
 
 export async function handlePoppayCallback(
@@ -384,6 +427,28 @@ async function handlePoppayTopup(
     return { action: "already_completed", topupId: topup.id };
   }
 
+  const topupTotal = Number(topup.totalPayment ?? 0);
+  const violation = findCallbackBindingViolation({
+    payload,
+    boundInvoiceId: topup.invoiceId,
+    billedTotal: topupTotal > 0 ? topupTotal : Number(topup.amount),
+  });
+
+  if (violation) {
+    log.error(
+      {
+        topupId: topup.id,
+        topupCode: topup.topupCode,
+        refId: payload.refid,
+        boundInvoiceId: topup.invoiceId ?? null,
+        callbackAmount: payload.amount,
+        violation,
+      },
+      "poppay callback ditolak: tidak terikat ke invoice topup ini"
+    );
+    return { action: violation, topupId: topup.id };
+  }
+
   const terminalStatus = resolveTopupTerminalStatus(payload.status);
   if (!terminalStatus) {
     return { action: "ignored", topupId: topup.id };
@@ -473,6 +538,32 @@ async function handlePoppayOrder(
     order.status === OrderStatus.SUCCESS
   ) {
     return { action: "already_completed", orderId: order.id };
+  }
+
+  // Diperiksa SEBELUM invoice atau order disentuh: callback yang tidak terikat
+  // ke order ini tidak boleh meninggalkan jejak apa pun.
+  const invoiceTotal = Number(order.paymentInvoice?.totalPayment ?? 0);
+  const violation = findCallbackBindingViolation({
+    payload,
+    boundInvoiceId: order.paymentInvoice?.invoiceId,
+    // Baris invoice lama bisa punya totalPayment 0; order.amount menyimpan
+    // nominal yang sama setelah fee gateway diketahui.
+    billedTotal: invoiceTotal > 0 ? invoiceTotal : Number(order.amount),
+  });
+
+  if (violation) {
+    log.error(
+      {
+        orderId: order.id,
+        orderCode: order.orderCode,
+        refId: payload.refid,
+        boundInvoiceId: order.paymentInvoice?.invoiceId ?? null,
+        callbackAmount: payload.amount,
+        violation,
+      },
+      "poppay callback ditolak: tidak terikat ke invoice order ini"
+    );
+    return { action: violation, orderId: order.id };
   }
 
   const invoiceStatus = resolveInvoiceTerminalStatus(payload.status);
