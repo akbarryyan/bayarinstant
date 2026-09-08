@@ -25,6 +25,12 @@ export interface WebhookHandleResult {
   action: "executed" | "ignored" | "already_paid" | "execute_failed";
   orderId?: string;
   executeError?: string;
+  /**
+   * Terisi kalau callback ini berhenti pada sesuatu yang masih bisa berubah —
+   * order belum terlihat di DB, gateway belum settle. Event-nya sengaja TIDAK
+   * ditandai selesai supaya retry berikutnya dari Pakasir masih diproses.
+   */
+  retryReason?: string;
 }
 
 /**
@@ -68,7 +74,7 @@ export class HandlePakasirWebhookService {
 
     try {
       const result = await this.processWebhook(payload);
-      await this.orderRepo.markWebhookProcessed(eventId);
+      await this.orderRepo.markWebhookProcessed(eventId, result.retryReason);
       return { ...result, duplicate: false };
     } catch (err: any) {
       await this.orderRepo.markWebhookProcessed(eventId, err.message);
@@ -90,7 +96,8 @@ export class HandlePakasirWebhookService {
 
     if (!order) {
       log.warn({ orderCode: payload.order_id }, "pakasir callback: order not found");
-      return { action: "ignored" };
+      // Bisa jadi callback mendahului commit order-nya. Biarkan retry menyusul.
+      return { action: "ignored", retryReason: "Order belum ditemukan saat callback diterima" };
     }
 
     // ── Already paid guard ──────────────────────────────────────────────────
@@ -117,7 +124,12 @@ export class HandlePakasirWebhookService {
         { orderCode: payload.order_id, gatewayStatus: detail.status },
         "pakasir callback ignored: gateway cross-check not completed"
       );
-      return { action: "ignored" };
+      // Settlement gateway bisa menyusul beberapa detik kemudian — jangan
+      // tutup pintu untuk callback berikutnya.
+      return {
+        action: "ignored",
+        retryReason: `Cross-check gateway belum completed (status=${detail.status})`,
+      };
     }
 
     // ── Mark invoice PAID ───────────────────────────────────────────────────

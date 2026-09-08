@@ -142,6 +142,25 @@ function logHandled(
   );
 }
 
+/**
+ * Alasan kenapa sebuah callback belum boleh dianggap tuntas.
+ *
+ * Dua outcome di bawah ini bukan kesimpulan akhir, hanya potret sesaat:
+ * - `not_found` — order/topup/withdrawal belum terlihat saat callback tiba.
+ * - `inquiry_mismatch` — cross-check ke Poppay tidak mengonfirmasi lunas.
+ *   `confirmCompletedViaInquiry()` menurunkan SEMUA error jadi `false`, jadi
+ *   satu timeout jaringan saja sudah cukup untuk sampai ke sini.
+ *
+ * Keduanya dikembalikan sebagai "error" ke `markWebhookProcessed()` supaya
+ * baris event tetap `processed: false` — satu-satunya cara retry Poppay
+ * berikutnya masih diproses, bukan dibuang sebagai duplikat.
+ */
+function retryReasonFor(action: PoppayCallbackResult["action"]): string | undefined {
+  if (action === "not_found") return "Data terkait callback belum ditemukan";
+  if (action === "inquiry_mismatch") return "Cross-check inquiry Poppay belum mengonfirmasi lunas";
+  return undefined;
+}
+
 export async function handlePoppayCallback(
   payload: PoppayCallbackPayload,
   rawPayload: unknown
@@ -172,20 +191,20 @@ export async function handlePoppayCallback(
 
     if (String(payload.agg_refid).startsWith("WT-")) {
       const result = await handlePoppayTopup(payload, paidAt);
-      await orderRepo.markWebhookProcessed(eventId);
+      await orderRepo.markWebhookProcessed(eventId, retryReasonFor(result.action));
       logHandled(eventId, payload, result);
       return { duplicate: false, ...result };
     }
 
     if (String(payload.agg_refid).startsWith("withdraw-")) {
       const result = await handlePoppayWithdrawal(payload);
-      await orderRepo.markWebhookProcessed(eventId);
+      await orderRepo.markWebhookProcessed(eventId, retryReasonFor(result.action));
       logHandled(eventId, payload, result);
       return { duplicate: false, ...result };
     }
 
     const result = await handlePoppayOrder(payload, paidAt);
-    await orderRepo.markWebhookProcessed(eventId);
+    await orderRepo.markWebhookProcessed(eventId, retryReasonFor(result.action));
     logHandled(eventId, payload, result);
     return { duplicate: false, ...result };
   } catch (error) {
