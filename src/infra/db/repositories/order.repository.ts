@@ -179,7 +179,17 @@ export class OrderRepository {
 
   // ── Webhook Idempotency ──────────────────────────────────────────────────
 
-  /** Returns existing event if already processed; creates new record if not */
+  /**
+   * Gerbang idempotency webhook.
+   *
+   * `duplicate: true` berarti "sudah pernah selesai diproses, jangan diulang".
+   * Baris yang ada tapi `processed: false` BUKAN duplikat — itu percobaan yang
+   * mati di tengah jalan (gateway timeout, DB lepas, proses restart). Retry
+   * dari payment gateway adalah satu-satunya kesempatan order itu sembuh, jadi
+   * ia harus lolos. Sebelumnya keberadaan baris saja sudah menutup pintu, yang
+   * membuat satu kegagalan sesaat berubah jadi "customer bayar, order mati
+   * selamanya".
+   */
   async findOrCreateWebhookEvent(data: {
     source: string;
     eventId: string;
@@ -189,7 +199,18 @@ export class OrderRepository {
     const existing = await prisma.webhookEvent.findUnique({
       where: { eventId: data.eventId },
     });
-    if (existing) return { event: existing, duplicate: true };
+
+    if (existing?.processed) return { event: existing, duplicate: true };
+
+    if (existing) {
+      // Buka kembali percobaan yang belum tuntas. errorMessage lama dihapus
+      // supaya sisa dari percobaan gagal tidak terbaca sebagai hasil terakhir.
+      const reclaimed = await prisma.webhookEvent.update({
+        where: { eventId: data.eventId },
+        data: { errorMessage: null },
+      });
+      return { event: reclaimed, duplicate: false };
+    }
 
     const event = await prisma.webhookEvent.create({
       data: {
