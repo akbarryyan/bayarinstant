@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSiteName } from "@/lib/site-config";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -11,6 +12,11 @@ const log = createLogger("api.auth");
 
 async function POST_handler(req: NextRequest) {
   try {
+    // Sudah ada batas 5 percobaan per kode; batas ini menutup penyerang yang
+    // meminta kode baru terus-menerus untuk memperbanyak tebakan.
+    const denied = enforceRateLimit(req.headers, "otp-verify", RATE_LIMITS.otpVerify);
+    if (denied) return denied;
+
     const siteName = await getSiteName();
     const body = await req.json();
     const { phone, email, code, purpose, name, target, password } = body;

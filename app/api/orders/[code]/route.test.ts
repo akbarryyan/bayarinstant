@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import crypto from "crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { RATE_LIMITS, resetRateLimits } from "@/lib/rate-limit";
+
 /**
  * `GET /api/orders/[code]` mengembalikan detail lengkap kepada siapa pun yang
  * tahu kode ordernya. Kode itu berpola `WP-YYMMDD-` + 6 hex dan endpoint-nya
@@ -83,6 +85,7 @@ async function get(query = "") {
 
 describe("GET /api/orders/[code] — akses tanpa token", () => {
   beforeEach(() => {
+    resetRateLimits();
     orderRow = makeOrder();
     session = {};
   });
@@ -135,6 +138,7 @@ describe("GET /api/orders/[code] — akses tanpa token", () => {
 
 describe("GET /api/orders/[code] — akses yang berhak", () => {
   beforeEach(() => {
+    resetRateLimits();
     orderRow = makeOrder();
     session = {};
   });
@@ -182,5 +186,40 @@ describe("GET /api/orders/[code] — akses yang berhak", () => {
     const { response } = await get(`?token=${"b".repeat(64)}`);
 
     expect(response.status).toBe(403);
+  });
+});
+
+describe("GET /api/orders/[code] — pembatasan laju", () => {
+  beforeEach(() => {
+    resetRateLimits();
+    orderRow = makeOrder();
+    session = {};
+  });
+
+  it("tidak memblokir halaman detail yang polling menunggu pembayaran", async () => {
+    // Halaman `/akun/pesanan/[code]` memanggil endpoint ini tiap 7 detik selama
+    // status WAITING_PAYMENT, sementara jendela QRIS berumur 30 menit. Batasnya
+    // harus memberi ruang untuk itu — dengan cadangan untuk beberapa tab —
+    // kalau tidak, pelanggan yang sedang menunggu pembayaran justru diblokir.
+    const POLL_INTERVAL_MS = 7_000;
+    const TABS = 3;
+    const pollsInWindow =
+      Math.ceil(RATE_LIMITS.orderLookup.windowMs / POLL_INTERVAL_MS) * TABS;
+
+    expect(RATE_LIMITS.orderLookup.limit).toBeGreaterThanOrEqual(pollsInWindow);
+  });
+
+  it("menolak penebakan kode order setelah batas tercapai", async () => {
+    // Kode order berpola WP-YYMMDD- + 6 hex. Tanpa pembatas, menyapu satu hari
+    // penuh hanya soal waktu dan bandwidth.
+    for (let i = 0; i < RATE_LIMITS.orderLookup.limit; i++) {
+      const { response } = await get();
+      expect(response.status).toBe(200);
+    }
+
+    const { response } = await get();
+
+    expect(response.status).toBe(429);
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(0);
   });
 });

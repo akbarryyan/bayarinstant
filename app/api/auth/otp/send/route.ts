@@ -4,6 +4,7 @@ import { prisma } from "@/src/infra/db/prisma";
 import { generateOTP } from "@/lib/fonnte";
 import { sendOtpEmail } from "@/lib/mailer";
 import { getSiteName } from "@/lib/site-config";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -11,6 +12,11 @@ const log = createLogger("api.auth");
 
 async function POST_handler(req: NextRequest) {
   try {
+    // Sudah ada cooldown 60 detik per target; batas ini menutup penyerang yang
+    // memutar-mutar nomor tujuan untuk menghabiskan kuota WhatsApp berbayar.
+    const denied = enforceRateLimit(req.headers, "otp-send", RATE_LIMITS.otpSend);
+    if (denied) return denied;
+
     await getSiteName();
     const body = await req.json();
     const { email, purpose } = body;

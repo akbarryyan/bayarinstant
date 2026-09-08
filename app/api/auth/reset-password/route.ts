@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/src/infra/db/prisma";
 import { normalizePhone, isValidPhone } from "@/lib/fonnte";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -9,6 +10,10 @@ const log = createLogger("api.auth");
 
 async function POST_handler(req: NextRequest) {
   try {
+    // Reset password adalah jalur pengambilalihan akun; jangan biarkan ditebak berulang.
+    const denied = enforceRateLimit(req.headers, "reset-password", RATE_LIMITS.resetPassword);
+    if (denied) return denied;
+
     const body = await req.json();
     const { identifier, method, code, newPassword, confirmPassword } = body;
     // method: "whatsapp" | "email"
