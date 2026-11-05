@@ -66,7 +66,11 @@ export default function SellerStorefrontPage({
   params: Promise<{ slug: string }>;
 }) {
   const router = useRouter();
-  const toast = useToast();
+  // `error` diambil terpisah karena referensinya stabil (useCallback), sedang
+  // objek toast ikut berubah tiap kali daftar toast berubah. Efek pemuat data
+  // di bawah bergantung pada nilai ini — pola yang sama dipakai di
+  // app/merchant/orders/[id]/page.tsx.
+  const { toasts, removeToast, error: showError } = useToast();
 
   const [slug, setSlug] = useState("");
   const [data, setData] = useState<SellerPageData | null>(null);
@@ -90,7 +94,7 @@ export default function SellerStorefrontPage({
         const message = err instanceof Error ? err.message : "Gagal memuat toko merchant";
         if (!cancelled) {
           setError(message);
-          toast.error(message);
+          showError(message);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -101,7 +105,7 @@ export default function SellerStorefrontPage({
     return () => {
       cancelled = true;
     };
-  }, [params, toast]);
+  }, [params, showError]);
 
   const productGrid = useMemo(() => {
     if (!data) return [];
@@ -142,7 +146,7 @@ export default function SellerStorefrontPage({
               Kembali ke Merchant
             </button>
           </div>
-          <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
+          <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div>
       </div>
     );
@@ -150,7 +154,7 @@ export default function SellerStorefrontPage({
 
   return (
     <div className={`${quicksand.className} flex min-h-screen justify-center bg-[#f5f7fb] lg:bg-[#F5F5F5]`}>
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <div className="relative w-full max-w-[480px] min-h-screen bg-[#f5f7fb] shadow-2xl lg:max-w-7xl lg:bg-[#F5F5F5] lg:shadow-none">
         <AppHeader onBack={() => router.push("/seller")} />
