@@ -26,7 +26,7 @@ export default defineConfig({
       MOCK_PROVIDER_SCENARIO: "success",
       MOCK_PROVIDER_DELAY_MS: "0",
     },
-    include: ["src/**/*.test.ts", "lib/**/*.test.ts", "app/**/*.test.ts", "test/**/*.test.ts"],
+    include: ["{src,lib,app,test,hooks,components}/**/*.test.{ts,tsx}"],
     exclude: ["node_modules/**", ".next/**"],
   },
 });
