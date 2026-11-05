@@ -17,6 +17,7 @@ import {
 } from "@/lib/site-config";
 import { initProviderModesFromDB } from "@/src/infra/providers/provider.factory";
 import { requireAdmin } from "@/lib/admin-guard";
+import { MissingEncryptionKeyError } from "@/lib/secret-crypto";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
@@ -117,7 +118,14 @@ async function PATCH_handler(request: Request) {
   if (parsed.data.value === "") {
     await deleteSiteConfig(parsed.data.key);
   } else {
-    await setSiteConfig(parsed.data.key, parsed.data.value);
+    try {
+      await setSiteConfig(parsed.data.key, parsed.data.value);
+    } catch (err) {
+      if (err instanceof MissingEncryptionKeyError) {
+        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+      }
+      throw err;
+    }
   }
 
   // Also sync ProviderFactory globalThis so it takes effect immediately
