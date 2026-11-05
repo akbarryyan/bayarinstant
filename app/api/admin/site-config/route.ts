@@ -17,9 +17,22 @@ import {
 } from "@/lib/site-config";
 import { initProviderModesFromDB } from "@/src/infra/providers/provider.factory";
 import { requireAdmin } from "@/lib/admin-guard";
+import { MissingEncryptionKeyError } from "@/lib/secret-crypto";
 import { withRequestLog } from "@/src/infra/logging/with-request-log";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Kunci rahasia yang NILAINYA tidak pernah dikirim ke browser. GET hanya
+ * melaporkan apakah kunci itu sudah terisi (`secretsSet`); mengubahnya tetap
+ * lewat PATCH. Mengirim nilai aslinya, walau input-nya type="password", berarti
+ * rahasia itu terbaca di tab Network / response JSON.
+ */
+const WRITE_ONLY_KEYS = [
+  "POPPAY_INTEGRATOR_TOKEN",
+  "POPPAY_SECRET_KEY",
+  "POPPAY_PASSWORD",
+] as const;
 
 async function GET_handler() {
   const deny = await requireAdmin();
@@ -33,25 +46,23 @@ async function GET_handler() {
     getAllProviderModes(),
   ]);
 
+  // Terisi = ada di DB (tidak ada fallback .env untuk Poppay). Dihitung SEBELUM nilainya dibuang.
+  const secretsSet: Record<string, boolean> = {};
+  for (const key of WRITE_ONLY_KEYS) {
+    secretsSet[key] = Boolean(raw[key]);
+    delete raw[key];
+  }
+
   return NextResponse.json({
     success: true,
     data: {
-      raw,          // all raw key→value pairs
+      raw,          // key→value, tanpa kunci write-only
       modes,        // effective resolved modes (DB > env > default)
+      secretsSet,   // kunci write-only → sudah terisi atau belum
       envDefaults: {
         PROVIDER_DIGIFLAZZ_MODE: process.env.PROVIDER_DIGIFLAZZ_MODE ?? "mock",
         PROVIDER_VIP_MODE: process.env.PROVIDER_VIP_MODE ?? "mock",
         HEADER_COLOR: normalizeHexColor(process.env.HEADER_COLOR, DEFAULT_HEADER_COLOR),
-        POPPAY_API_BASE_URL: process.env.POPPAY_API_BASE_URL ?? "",
-        POPPAY_URL: process.env.POPPAY_URL ?? "",
-        POPPAY_PORT: process.env.POPPAY_PORT ?? "",
-        POPPAY_VERSION: process.env.POPPAY_VERSION ?? "",
-        POPPAY_INTEGRATOR_TOKEN: process.env.POPPAY_INTEGRATOR_TOKEN ?? "",
-        POPPAY_AGGREGATOR_CODE: process.env.POPPAY_AGGREGATOR_CODE ?? "",
-        POPPAY_MERCHANT_ACCOUNT_NUMBER: process.env.POPPAY_MERCHANT_ACCOUNT_NUMBER ?? "",
-        POPPAY_SECRET_KEY: process.env.POPPAY_SECRET_KEY ?? "",
-        POPPAY_EMAIL: process.env.POPPAY_EMAIL ?? "",
-        POPPAY_PASSWORD: process.env.POPPAY_PASSWORD ?? "",
         PAYMENT_GATEWAY_QRIS_FEE_TYPE: process.env.PAYMENT_GATEWAY_QRIS_FEE_TYPE ?? "FIXED",
         PAYMENT_GATEWAY_QRIS_FEE_VALUE: process.env.PAYMENT_GATEWAY_QRIS_FEE_VALUE ?? "0",
         MERCHANT_PLATFORM_FEE_TYPE: process.env.MERCHANT_PLATFORM_FEE_TYPE ?? "FIXED",
@@ -107,7 +118,14 @@ async function PATCH_handler(request: Request) {
   if (parsed.data.value === "") {
     await deleteSiteConfig(parsed.data.key);
   } else {
-    await setSiteConfig(parsed.data.key, parsed.data.value);
+    try {
+      await setSiteConfig(parsed.data.key, parsed.data.value);
+    } catch (err) {
+      if (err instanceof MissingEncryptionKeyError) {
+        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+      }
+      throw err;
+    }
   }
 
   // Also sync ProviderFactory globalThis so it takes effect immediately

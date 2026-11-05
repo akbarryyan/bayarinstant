@@ -11,12 +11,27 @@
  */
 
 import { prisma } from "@/src/infra/db/prisma";
+import { createLogger } from "@/src/infra/logging/logger";
+import { decryptSecret, encryptSecret } from "@/lib/secret-crypto";
 import {
   DEFAULT_PAYMENT_GATEWAY_FEE_CONFIG,
   PaymentGatewayFeeConfig,
   normalizePaymentGatewayFeeConfig,
   normalizePaymentGatewayFeeType,
 } from "@/lib/payment-gateway-fee";
+
+const log = createLogger("api.admin");
+
+/**
+ * Kunci yang nilainya dienkripsi di database (AES-256-GCM, kunci dari
+ * CONFIG_ENCRYPTION_KEY). Penulisan selalu terenkripsi; pembacaan mengembalikan
+ * teks asli ke pemanggil server-side. Nilai lama tanpa prefix tetap terbaca.
+ */
+export const ENCRYPTED_KEYS: ReadonlySet<string> = new Set([
+  "POPPAY_INTEGRATOR_TOKEN",
+  "POPPAY_SECRET_KEY",
+  "POPPAY_PASSWORD",
+]);
 
 export const DEFAULT_SITE_NAME = "Website";
 export const DEFAULT_HEADER_COLOR = "#003D99";
@@ -47,7 +62,19 @@ export async function getAllSiteConfig(): Promise<Record<string, string>> {
   try {
     const rows = await prisma.siteConfig.findMany();
     const map: Record<string, string> = {};
-    for (const r of rows) map[r.key] = r.value;
+    for (const r of rows) {
+      if (!ENCRYPTED_KEYS.has(r.key)) {
+        map[r.key] = r.value;
+        continue;
+      }
+      try {
+        map[r.key] = decryptSecret(r.value);
+      } catch (err) {
+        // Kunci salah/hilang atau data rusak: anggap belum diisi, jangan
+        // menjatuhkan seluruh konfigurasi situs.
+        log.error({ err, key: r.key }, "gagal mendekripsi konfigurasi — dianggap belum diisi");
+      }
+    }
 
     g._siteConfigCache = map;
     g._siteConfigCacheAt = Date.now();
@@ -121,10 +148,13 @@ export async function getMerchantPlatformFeeConfig(): Promise<PaymentGatewayFeeC
 
 /** Upsert a config value and invalidate cache */
 export async function setSiteConfig(key: string, value: string): Promise<void> {
+  // Gagal tertutup: kalau CONFIG_ENCRYPTION_KEY belum benar, melempar — nilai
+  // rahasia tidak pernah ditulis sebagai teks biasa.
+  const stored = ENCRYPTED_KEYS.has(key) ? encryptSecret(value) : value;
   await prisma.siteConfig.upsert({
     where: { key },
-    create: { key, value },
-    update: { value },
+    create: { key, value: stored },
+    update: { value: stored },
   });
   invalidateSiteConfigCache();
 }

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { getSiteConfigValue } from "@/lib/site-config";
+import { getSiteConfig } from "@/lib/site-config";
 import { handlePoppayCallback, type PoppayCallbackPayload } from "@/lib/poppay-callback";
 import { createLogger } from "@/src/infra/logging/logger";
 
@@ -63,8 +63,8 @@ async function verifyPoppayWebhookSignature(
   rawBody: string,
   payload: PoppayCallbackPayload
 ): Promise<VerificationResult> {
-  const secret = (await getSiteConfigValue("POPPAY_SECRET_KEY")).trim();
-  const signatureRequired = normalizeBool(await getSiteConfigValue("POPPAY_WEBHOOK_SIGNATURE_REQUIRED", ""));
+  const secret = ((await getSiteConfig("POPPAY_SECRET_KEY")) ?? "").trim();
+  const signatureRequired = normalizeBool((await getSiteConfig("POPPAY_WEBHOOK_SIGNATURE_REQUIRED")) ?? "");
 
   if (!secret) {
     if (signatureRequired) {

@@ -224,6 +224,11 @@ function parsePoppayMerchantAccountNumber(value: string): number | null {
   return parsed;
 }
 
+/**
+ * Konfigurasi Poppay HANYA dibaca dari database (halaman Admin → Pengaturan).
+ * Sengaja tanpa fallback ke variabel env supaya satu-satunya sumber kebenaran
+ * jelas dan kredensial tidak tersebar di dua tempat.
+ */
 async function getPoppayRuntimeConfig(): Promise<PoppayRuntimeConfig> {
   const [
     dbApiBaseUrl,
@@ -250,22 +255,20 @@ async function getPoppayRuntimeConfig(): Promise<PoppayRuntimeConfig> {
   ]);
 
   const baseUrl = buildPoppayBaseUrlFromValues(
-    dbApiBaseUrl || process.env.POPPAY_API_BASE_URL || "",
-    dbHost || process.env.POPPAY_URL || "",
-    dbPort || process.env.POPPAY_PORT || ""
+    dbApiBaseUrl ?? "",
+    dbHost ?? "",
+    dbPort ?? ""
   );
 
   return {
     baseUrl,
-    versionPath: buildPoppayVersionPath(dbVersion || process.env.POPPAY_VERSION || ""),
-    integratorToken: (dbIntegratorToken || process.env.POPPAY_INTEGRATOR_TOKEN || "").trim(),
-    aggregatorCode: (dbAggregatorCode || process.env.POPPAY_AGGREGATOR_CODE || "").trim(),
-    merchantAccountNumber: normalizePoppayMerchantAccountNumber(
-      dbMerchantAccountNumber || process.env.POPPAY_MERCHANT_ACCOUNT_NUMBER || ""
-    ),
-    secretKey: (dbSecretKey || process.env.POPPAY_SECRET_KEY || "").trim(),
-    email: (dbEmail || process.env.POPPAY_EMAIL || "").trim(),
-    password: (dbPassword || process.env.POPPAY_PASSWORD || "").trim(),
+    versionPath: buildPoppayVersionPath(dbVersion ?? ""),
+    integratorToken: (dbIntegratorToken ?? "").trim(),
+    aggregatorCode: (dbAggregatorCode ?? "").trim(),
+    merchantAccountNumber: normalizePoppayMerchantAccountNumber(dbMerchantAccountNumber ?? ""),
+    secretKey: (dbSecretKey ?? "").trim(),
+    email: (dbEmail ?? "").trim(),
+    password: (dbPassword ?? "").trim(),
   };
 }
 

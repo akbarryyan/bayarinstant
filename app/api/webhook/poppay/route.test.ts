@@ -17,7 +17,7 @@ const config: Record<string, string> = {};
 const handleCalls: unknown[] = [];
 
 vi.mock("@/lib/site-config", () => ({
-  getSiteConfigValue: async (key: string, fallback = "") => config[key] ?? fallback,
+  getSiteConfig: async (key: string) => config[key] ?? null,
 }));
 
 vi.mock("@/lib/poppay-callback", () => ({
